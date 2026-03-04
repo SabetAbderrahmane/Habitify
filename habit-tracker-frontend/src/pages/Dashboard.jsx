@@ -3,12 +3,17 @@ import StreakCalendar from "../components/StreakCalendar";
 import InsightsPanel from "../components/InsightsPanel";
 import AddHabitModal from "../components/AddHabitModal";
 import HabitCard from "../components/HabitCard";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useHabits } from "../context/HabitsContext";
+import { useToast } from "../components/ToastProvider";
 import { deleteHabit, fetchHabitNames, updateHabit, createHabit } from "../lib/habits";
 
 export default function Dashboard() {
   const { habits, loadingHabits, habitsError, reloadHabits, addHabit, setHabits } = useHabits();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [habitNames, setHabitNames] = useState([]);
 
   const stats = useMemo(() => {
@@ -20,7 +25,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     (async () => {
-      await reloadHabits();
+      try {
+        await reloadHabits();
+      } catch (e) {
+        toast.error("Failed to load habits", "Check if the backend is running on 127.0.0.1:8000");
+      }
       try {
         const names = await fetchHabitNames();
         setHabitNames(Array.isArray(names) ? names : []);
@@ -32,13 +41,41 @@ export default function Dashboard() {
   }, []);
 
   const onCreate = async (habit) => {
-    await addHabit(habit);
-    // refresh names
     try {
-      const names = await fetchHabitNames();
-      setHabitNames(Array.isArray(names) ? names : []);
-    } catch {
-      // ignore
+      await addHabit(habit);
+      await reloadHabits(); // refresh list to stay consistent
+      toast.success("Habit added", `${habit.name} • ${habit.progress}%`);
+      // refresh names
+      try {
+        const names = await fetchHabitNames();
+        setHabitNames(Array.isArray(names) ? names : []);
+      } catch {
+        // ignore
+      }
+    } catch (e) {
+      toast.error("Could not add habit", e?.message || "Unknown error");
+      throw e; // keep modal error behavior
+    }
+  };
+
+  const requestDelete = (habit) => {
+    setPendingDelete(habit);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+
+    try {
+      await deleteHabit(pendingDelete.id);
+      setHabits((prev) => prev.filter((h) => h.id !== pendingDelete.id));
+
+      toast.success("Deleted", pendingDelete.name);
+    } catch (e) {
+      toast.error("Delete failed", e?.message || "Unknown error");
+    } finally {
+      setConfirmOpen(false);
+      setPendingDelete(null);
     }
   };
 
@@ -51,11 +88,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (habit) => {
-    await deleteHabit(habit.id);
-    setHabits((prev) => prev.filter((h) => h.id !== habit.id));
-
-    const names = await fetchHabitNames();
-    setHabitNames(Array.isArray(names) ? names : []);
+    requestDelete(habit);
   };
 
   const handleBumpToday = async (habit) => {
@@ -144,6 +177,22 @@ export default function Dashboard() {
         onClose={() => setOpen(false)}
         onCreate={onCreate}
         habitNames={habitNames}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete this habit entry?"
+        message={
+          pendingDelete
+            ? `This will remove: "${pendingDelete.name}" on ${pendingDelete.date}.`
+            : "This action cannot be undone."
+        }
+        confirmText="Delete"
+        onCancel={() => {
+          setConfirmOpen(false);
+          setPendingDelete(null);
+        }}
+        onConfirm={confirmDelete}
       />
     </div>
   );
