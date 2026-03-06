@@ -1,8 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import habit  # Import your API logic
-from api import auth
-app = FastAPI(title="Habit API")
+
+from api import auth, habit, checkin, recovery, content
+from db import init_db, seed_recommended_and_core_data
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    seed_recommended_and_core_data()
+    yield
+
+
+app = FastAPI(title="Habit API", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -11,18 +24,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Enable CORS middleware to allow requests from the React frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (can be restricted for production)
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
-)
-
-# Include the habit-related routes
-app.include_router(habit.router)
 app.include_router(auth.router)
+app.include_router(habit.router)
+app.include_router(checkin.router)
+app.include_router(recovery.router)
+app.include_router(content.router)
+
 
 @app.get("/")
 def read_root():
