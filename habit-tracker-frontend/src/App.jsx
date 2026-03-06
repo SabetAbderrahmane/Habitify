@@ -11,6 +11,7 @@ import HabitLibrary from "./pages/HabitLibrary";
 import RecommendedPage from "./pages/RecommendedPage";
 import CoreHabitsPage from "./pages/CoreHabitsPage";
 import RecoveryPage from "./pages/RecoveryPage";
+import DailyCheckinPage from "./pages/DailyCheckinPage";
 import { HabitsProvider } from "./context/HabitsContext";
 
 import AppShell from "./layouts/AppShell";
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="recommended" element={<RecommendedPage />} />
           <Route path="core" element={<CoreHabitsPage />} />
           <Route path="recovery" element={<RecoveryPage />} />
+          <Route path="checkin" element={<DailyCheckinPage />} />
           <Route path="habit/:habitName" element={<HabitDetail />} />
         </Route>
 

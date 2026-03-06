@@ -8,6 +8,7 @@ import {
   FiActivity,
   FiSettings,
   FiShield,
+  FiCheckSquare,
   FiLogOut,
 } from "react-icons/fi";
 
@@ -52,6 +53,7 @@ export default function AppShell({ onLogout }) {
 
           <div className="space-y-2">
             <Item to="/app" icon={FiGrid} label="Dashboard" />
+            <Item to="/app/checkin" icon={FiCheckSquare} label="Daily Check-in" />
             <Item to="/app/library" icon={FiBookOpen} label="Library" />
             <Item to="/app/recommended" icon={FiCompass} label="Recommended" />
             <Item to="/app/core" icon={FiHeart} label="Core Habits" />
