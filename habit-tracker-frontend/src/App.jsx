@@ -7,6 +7,10 @@ import CalendarPage from "./pages/CalendarPage";
 import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import HabitDetail from "./pages/HabitDetail";
+import HabitLibrary from "./pages/HabitLibrary";
+import RecommendedPage from "./pages/RecommendedPage";
+import CoreHabitsPage from "./pages/CoreHabitsPage";
+import RecoveryPage from "./pages/RecoveryPage";
 import { HabitsProvider } from "./context/HabitsContext";
 
 import AppShell from "./layouts/AppShell";
@@ -48,6 +52,10 @@ export default function App() {
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="insights" element={<InsightsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="library" element={<HabitLibrary />} />
+          <Route path="recommended" element={<RecommendedPage />} />
+          <Route path="core" element={<CoreHabitsPage />} />
+          <Route path="recovery" element={<RecoveryPage />} />
           <Route path="habit/:habitName" element={<HabitDetail />} />
         </Route>
 
