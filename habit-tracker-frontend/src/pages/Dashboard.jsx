@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import StreakCalendar from "../components/StreakCalendar";
 import InsightsPanel from "../components/InsightsPanel";
 import AddHabitModal from "../components/AddHabitModal";
@@ -6,7 +7,8 @@ import HabitCard from "../components/HabitCard";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useHabits } from "../context/HabitsContext";
 import { useToast } from "../components/ToastProvider";
-import { coreHabits } from "../data/coreHabits";
+import { fetchCoreHabits } from "../lib/content";
+import { fetchTodayNudges } from "../lib/nudges";
 import { createHabit, deleteHabit, fetchHabitNames, updateHabit } from "../lib/habits";
 
 function missedTwoDays(habits, habitName) {
@@ -20,57 +22,80 @@ function missedTwoDays(habits, habitName) {
   }
 
   return targetDates.every((date) => {
-    return !habits.some((h) => h.name === habitName && h.date === date && Number(h.progress || 0) > 0);
+    return !habits.some(
+      (h) => h.name === habitName && h.date === date && Number(h.progress || 0) > 0
+    );
   });
 }
 
 export default function Dashboard() {
-  const { habits, loadingHabits, habitsError, reloadHabits, addHabit, setHabits } = useHabits();
+  const {
+    habits,
+    loadingHabits,
+    habitsError,
+    reloadHabits,
+    addHabit,
+    setHabits,
+  } = useHabits();
+
   const toast = useToast();
 
+  const [nudges, setNudges] = useState([]);
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [habitNames, setHabitNames] = useState([]);
+  const [coreHabits, setCoreHabits] = useState([]);
 
-  // NEW: filters
+  // filters
   const [q, setQ] = useState("");
   const [dateFilter, setDateFilter] = useState("all"); // all | today | week | month
   const [statusFilter, setStatusFilter] = useState("all"); // all | completed | struggling
   const [sort, setSort] = useState("dateDesc"); // dateDesc | dateAsc | progressDesc | progressAsc
 
   const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const weekAgoISO = useMemo(() => new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString().slice(0, 10), []);
-  const monthAgoISO = useMemo(() => new Date(Date.now() - 29 * 24 * 3600 * 1000).toISOString().slice(0, 10), []);
+  const weekAgoISO = useMemo(
+    () => new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    []
+  );
+  const monthAgoISO = useMemo(
+    () => new Date(Date.now() - 29 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    []
+  );
 
   const stats = useMemo(() => {
     const total = habits.length;
-    const avg = total ? Math.round(habits.reduce((a, h) => a + Number(h.progress || 0), 0) / total) : 0;
+    const avg = total
+      ? Math.round(habits.reduce((a, h) => a + Number(h.progress || 0), 0) / total)
+      : 0;
     const best = total ? Math.max(...habits.map((h) => Number(h.progress || 0))) : 0;
     return { total, avg, best };
   }, [habits]);
 
   const missedCoreHabits = useMemo(() => {
     return coreHabits.filter((habit) => missedTwoDays(habits, habit.name));
-  }, [habits]);
+  }, [habits, coreHabits]);
 
   const filteredHabits = useMemo(() => {
     let arr = habits;
 
-    // search
     const s = q.trim().toLowerCase();
     if (s) arr = arr.filter((h) => (h.name || "").toLowerCase().includes(s));
 
-    // date range
     if (dateFilter === "today") arr = arr.filter((h) => h.date === todayISO);
     if (dateFilter === "week") arr = arr.filter((h) => h.date >= weekAgoISO);
     if (dateFilter === "month") arr = arr.filter((h) => h.date >= monthAgoISO);
 
-    // status
-    if (statusFilter === "completed") arr = arr.filter((h) => Number(h.progress || 0) >= 80);
-    if (statusFilter === "struggling") arr = arr.filter((h) => Number(h.progress || 0) > 0 && Number(h.progress || 0) <= 30);
+    if (statusFilter === "completed") {
+      arr = arr.filter((h) => Number(h.progress || 0) >= 80);
+    }
 
-    // sort
+    if (statusFilter === "struggling") {
+      arr = arr.filter(
+        (h) => Number(h.progress || 0) > 0 && Number(h.progress || 0) <= 30
+      );
+    }
+
     const byDate = (a, b) => (a.date || "").localeCompare(b.date || "");
     const byProg = (a, b) => Number(a.progress || 0) - Number(b.progress || 0);
 
@@ -85,9 +110,34 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
+        const data = await fetchCoreHabits();
+        setCoreHabits(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setCoreHabits([]);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchTodayNudges();
+        setNudges(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setNudges([]);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
         await reloadHabits();
       } catch {
-        toast.error("Failed to load habits", "Check if backend is running on 127.0.0.1:8000");
+        toast.error(
+          "Failed to load habits",
+          "Check if backend is running on 127.0.0.1:8000"
+        );
       }
 
       try {
@@ -100,10 +150,20 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const refreshNudges = async () => {
+    try {
+      const data = await fetchTodayNudges();
+      setNudges(Array.isArray(data) ? data : []);
+    } catch {
+      setNudges([]);
+    }
+  };
+
   const onCreate = async (habit) => {
     try {
       await addHabit(habit);
       await reloadHabits();
+      await refreshNudges();
       toast.success("Habit added", `${habit.name} • ${habit.progress}%`);
 
       try {
@@ -125,9 +185,11 @@ export default function Dashboard() {
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
+
     try {
       await deleteHabit(pendingDelete.id);
       setHabits((prev) => prev.filter((h) => h.id !== pendingDelete.id));
+      await refreshNudges();
       toast.success("Deleted", pendingDelete.name);
     } catch (e) {
       toast.error("Delete failed", e?.message || "Unknown error");
@@ -141,6 +203,7 @@ export default function Dashboard() {
     try {
       const updated = await updateHabit(habit.id, patch);
       setHabits((prev) => prev.map((h) => (h.id === updated.id ? updated : h)));
+      await refreshNudges();
       toast.success("Saved", `${updated.name} • ${updated.progress}%`);
 
       const names = await fetchHabitNames();
@@ -160,11 +223,17 @@ export default function Dashboard() {
         const next = Math.min(100, Number(habit.progress || 0) + 10);
         await handleUpdate(habit, { progress: next });
       } else {
-        const created = await createHabit({ name: habit.name, progress: 10, date: today });
+        const created = await createHabit({
+          name: habit.name,
+          progress: 10,
+          date: today,
+        });
+
         setHabits((prev) => [created, ...prev]);
 
         const names = await fetchHabitNames();
         setHabitNames(Array.isArray(names) ? names : []);
+        await refreshNudges();
         toast.success("Logged today", `${habit.name} • 10%`);
       }
     } catch (e) {
@@ -185,7 +254,10 @@ export default function Dashboard() {
 
         <div className="flex gap-3">
           <button
-            onClick={reloadHabits}
+            onClick={async () => {
+              await reloadHabits();
+              await refreshNudges();
+            }}
             className="rounded-xl bg-white/10 px-4 py-2 text-sm ring-1 ring-white/15 hover:bg-white/15"
           >
             Refresh
@@ -207,11 +279,46 @@ export default function Dashboard() {
         <Stat title="Best Today" value={`${stats.best}%`} />
       </div>
 
+      {/* Nudges feed */}
+      {nudges.length > 0 ? (
+        <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
+          <div className="text-lg font-semibold">Today’s nudges</div>
+          <div className="mt-2 text-sm text-white/60">
+            Small prompts based on your recent activity.
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {nudges.map((n) => (
+              <div
+                key={n.id}
+                className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/10"
+              >
+                <div className="text-sm font-semibold">{n.title}</div>
+                <div className="mt-2 text-sm text-white/60">{n.message}</div>
+
+                {n.action ? (
+                  <Link
+                    to={n.action.path}
+                    className="mt-4 inline-block rounded-xl bg-white/10 px-3 py-2 text-sm ring-1 ring-white/15 hover:bg-white/15"
+                  >
+                    {n.action.label}
+                  </Link>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Legacy friendly reminders based on core habits */}
       {missedCoreHabits.length > 0 ? (
         <div className="rounded-3xl bg-yellow-400/10 p-5 ring-1 ring-yellow-300/20">
-          <div className="text-lg font-semibold text-yellow-100">Friendly reminders</div>
+          <div className="text-lg font-semibold text-yellow-100">
+            Friendly reminders
+          </div>
           <div className="mt-2 text-sm text-yellow-50/90">
-            You missed these core habits for 2 days. A small step today can restart momentum.
+            You missed these core habits for 2 days. A small step today can restart
+            momentum.
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -227,7 +334,7 @@ export default function Dashboard() {
         </div>
       ) : null}
 
-      {/* NEW: Filter bar */}
+      {/* Filter bar */}
       <div className="rounded-3xl bg-white/5 p-4 ring-1 ring-white/10">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <input
@@ -278,7 +385,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Insights + Calendar (wow, but not blocking list usage) */}
+      {/* Insights + Calendar */}
       <InsightsPanel habits={habits} />
       <StreakCalendar habits={habits} />
 
@@ -288,7 +395,7 @@ export default function Dashboard() {
         </div>
       ) : null}
 
-      {/* List */}
+      {/* Habit list */}
       {loadingHabits ? (
         <SkeletonGrid />
       ) : filteredHabits.length === 0 ? (
@@ -307,13 +414,20 @@ export default function Dashboard() {
         </div>
       )}
 
-      <AddHabitModal open={open} onClose={() => setOpen(false)} onCreate={onCreate} habitNames={habitNames} />
+      <AddHabitModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onCreate={onCreate}
+        habitNames={habitNames}
+      />
 
       <ConfirmDialog
         open={confirmOpen}
         title="Delete this habit entry?"
         message={
-          pendingDelete ? `This will remove: "${pendingDelete.name}" on ${pendingDelete.date}.` : "This action cannot be undone."
+          pendingDelete
+            ? `This will remove: "${pendingDelete.name}" on ${pendingDelete.date}.`
+            : "This action cannot be undone."
         }
         confirmText="Delete"
         onCancel={() => {
@@ -339,7 +453,9 @@ function EmptyState({ onAdd }) {
   return (
     <div className="rounded-3xl bg-white/5 p-10 text-center ring-1 ring-white/10">
       <div className="text-2xl font-semibold">No habits yet</div>
-      <div className="mt-2 text-white/60">Add your first habit and start building momentum.</div>
+      <div className="mt-2 text-white/60">
+        Add your first habit and start building momentum.
+      </div>
       <button
         onClick={onAdd}
         className="mt-6 rounded-xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-5 py-2 text-sm font-semibold text-black"
@@ -354,7 +470,10 @@ function SkeletonGrid() {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-[130px] rounded-2xl bg-white/5 ring-1 ring-white/10 overflow-hidden">
+        <div
+          key={i}
+          className="h-[130px] overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10"
+        >
           <div className="h-full w-full animate-[shimmer_1.3s_infinite] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.08),transparent)]" />
         </div>
       ))}

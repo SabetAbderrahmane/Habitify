@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useHabits } from "../context/HabitsContext";
 import { useToast } from "../components/ToastProvider";
-import { getCheckin, getTodayKey, saveCheckin } from "../lib/checkinStorage";
+import { fetchCheckin, saveCheckin } from "../lib/checkins";
+
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 const moodOptions = ["Great", "Good", "Okay", "Low", "Bad"];
 const energyOptions = ["High", "Medium", "Low"];
@@ -27,24 +31,35 @@ export default function DailyCheckinPage() {
   }, [todayHabits]);
 
   useEffect(() => {
-    const existing = getCheckin(today);
-    setMood(existing.mood || "");
-    setEnergy(existing.energy || "");
-    setHadUrges(Boolean(existing.hadUrges));
-    setDifficult(existing.difficult || "");
-    setNote(existing.note || "");
-  }, [today]);
+    (async () => {
+      try {
+        const existing = await fetchCheckin(today);
+        setMood(existing.mood || "");
+        setEnergy(existing.energy || "");
+        setHadUrges(Boolean(existing.had_urges));
+        setDifficult(existing.difficult || "");
+        setNote(existing.note || "");
+      } catch (e) {
+        toast.error("Failed to load check-in", e?.message || "Unknown error");
+      }
+    })();
+  }, [today, toast]);
 
-  const save = () => {
-    saveCheckin(today, {
-      mood,
-      energy,
-      hadUrges,
-      difficult,
-      note,
-      completed: true,
-    });
-    toast.success("Check-in saved", "Your daily reflection has been recorded.");
+  const save = async () => {
+    try {
+      await saveCheckin({
+        date: today,
+        mood,
+        energy,
+        had_urges: hadUrges,
+        difficult,
+        note,
+        completed: true,
+      });
+      toast.success("Check-in saved", "Your daily reflection has been recorded.");
+    } catch (e) {
+      toast.error("Failed to save check-in", e?.message || "Unknown error");
+    }
   };
 
   return (

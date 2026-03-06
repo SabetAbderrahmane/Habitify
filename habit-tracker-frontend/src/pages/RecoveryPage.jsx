@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { recoveryPlans } from "../data/recoveryPlans";
 import UrgeActionModal from "../components/UrgeActionModal";
 import { useToast } from "../components/ToastProvider";
 import {
-  getRecoveryStats,
-  logRelapse,
+  fetchRecoveryPlan,
+  fetchRecoveryStats,
+  logRecoveryRelapse,
   logSurvivedUrge,
-} from "../lib/recoveryStorage";
+} from "../lib/recovery";
 
 const habitOptions = [
   { key: "smoking", label: "Smoking" },
@@ -34,29 +34,67 @@ export default function RecoveryPage() {
     strongestTrigger: "—",
     cleanStreak: 0,
   });
+  const [plan, setPlan] = useState({ title: "", replacements: [] });
 
-  const plan = useMemo(() => recoveryPlans[habit], [habit]);
   const replacementOptions = plan?.replacements || [];
   const selectedReplacement = replacement || replacementOptions[0] || "";
 
   useEffect(() => {
-    setStats(getRecoveryStats(habit));
-  }, [habit]);
+    (async () => {
+      try {
+        const data = await fetchRecoveryPlan(habit);
+        setPlan(data);
+      } catch (e) {
+        toast.error("Failed to load recovery plan", e?.message || "Unknown error");
+        setPlan({ title: "", replacements: [] });
+      }
+    })();
+  }, [habit, toast]);
 
-  const refreshStats = () => {
-    setStats(getRecoveryStats(habit));
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchRecoveryStats(habit);
+        setStats(data);
+      } catch (e) {
+        toast.error("Failed to load recovery stats", e?.message || "Unknown error");
+      }
+    })();
+  }, [habit, toast]);
+
+  const refreshStats = async () => {
+    try {
+      const data = await fetchRecoveryStats(habit);
+      setStats(data);
+    } catch (e) {
+      toast.error("Failed to refresh stats", e?.message || "Unknown error");
+    }
   };
 
-  const handleRelapse = () => {
-    logRelapse(habit, trigger);
-    refreshStats();
-    toast.error("Relapse logged", "No shame. Start again from the next decision.");
+  const handleRelapse = async () => {
+    try {
+      await logRecoveryRelapse({
+        habit_key: habit,
+        trigger,
+      });
+      await refreshStats();
+      toast.error("Relapse logged", "No shame. Start again from the next decision.");
+    } catch (e) {
+      toast.error("Failed to log relapse", e?.message || "Unknown error");
+    }
   };
 
-  const handleUrgeSuccess = () => {
-    logSurvivedUrge(habit, trigger);
-    refreshStats();
-    toast.success("Urge survived", "That was a real win.");
+  const handleUrgeSuccess = async () => {
+    try {
+      await logSurvivedUrge({
+        habit_key: habit,
+        trigger,
+      });
+      await refreshStats();
+      toast.success("Urge survived", "That was a real win.");
+    } catch (e) {
+      toast.error("Failed to log urge success", e?.message || "Unknown error");
+    }
   };
 
   return (

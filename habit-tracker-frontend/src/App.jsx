@@ -18,6 +18,10 @@ import AppShell from "./layouts/AppShell";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { setAuthToken } from "./lib/api";
 import { fetchHabits } from "./lib/habits";
+import NotificationsPage from "./pages/NotificationsPage";
+import { NotificationsProvider } from "./context/NotificationsContext";
+
+
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("access_token") || "");
@@ -33,6 +37,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <NotificationsProvider>
       <Routes>
         <Route
           path="/auth"
@@ -59,11 +64,13 @@ export default function App() {
           <Route path="recovery" element={<RecoveryPage />} />
           <Route path="checkin" element={<DailyCheckinPage />} />
           <Route path="habit/:habitName" element={<HabitDetail />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
-
+        
         <Route path="/" element={<Navigate to={token ? "/app" : "/auth"} replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </NotificationsProvider>
     </BrowserRouter>
   );
 }

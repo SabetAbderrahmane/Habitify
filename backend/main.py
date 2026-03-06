@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from api import auth, habit, checkin, recovery, content
+from api import auth, habit, checkin, recovery, content, profile
 from db import init_db, seed_recommended_and_core_data
+from api import nudges
+from api import notifications
+
+
 
 
 @asynccontextmanager
@@ -29,6 +31,9 @@ app.include_router(habit.router)
 app.include_router(checkin.router)
 app.include_router(recovery.router)
 app.include_router(content.router)
+app.include_router(profile.router)
+app.include_router(nudges.router)
+app.include_router(notifications.router)
 
 
 @app.get("/")

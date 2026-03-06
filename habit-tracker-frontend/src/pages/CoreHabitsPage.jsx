@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { coreHabits } from "../data/coreHabits";
+import { useEffect, useMemo, useState } from "react";
+import { fetchCoreHabits } from "../lib/content";
 import { createHabit } from "../lib/habits";
 import { useToast } from "../components/ToastProvider";
 import { useHabits } from "../context/HabitsContext";
@@ -27,6 +27,19 @@ export default function CoreHabitsPage() {
   const { habits, setHabits } = useHabits();
   const toast = useToast();
   const [busyName, setBusyName] = useState("");
+  const [coreHabits, setCoreHabits] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchCoreHabits();
+        setCoreHabits(Array.isArray(data) ? data : []);
+      } catch (e) {
+        toast.error("Failed to load core habits", e?.message || "Unknown error");
+        setCoreHabits([]);
+      }
+    })();
+  }, [toast]);
 
   const statusMap = useMemo(() => {
     const map = new Map();

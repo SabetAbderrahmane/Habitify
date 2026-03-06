@@ -9,6 +9,46 @@ from db import get_connection
 router = APIRouter(tags=["recovery"])
 
 
+RECOVERY_PLANS = {
+    "smoking": {
+        "title": "Quit Smoking Plan",
+        "replacements": [
+            "Drink water",
+            "Chew gum",
+            "Walk for 2 minutes",
+            "Take 5 deep breaths",
+        ],
+    },
+    "sleep_late": {
+        "title": "Sleep Earlier Plan",
+        "replacements": [
+            "Put phone away 30 min before bed",
+            "Read 5 pages",
+            "Prepare tomorrow’s tasks",
+            "Drink herbal tea",
+        ],
+    },
+    "alcohol": {
+        "title": "Reduce Alcohol Plan",
+        "replacements": [
+            "Drink sparkling water",
+            "Make tea",
+            "Go for a short walk",
+            "Call a friend",
+        ],
+    },
+    "doomscrolling": {
+        "title": "Reduce Doomscrolling Plan",
+        "replacements": [
+            "Read 5 pages",
+            "Lock phone for 10 minutes",
+            "Journal 3 lines",
+            "Do 10 pushups",
+        ],
+    },
+}
+
+
 class RecoveryEventIn(BaseModel):
     habit_key: str
     trigger: str = ""
@@ -19,6 +59,29 @@ class RecoveryStatsOut(BaseModel):
     survivedCount: int
     strongestTrigger: str
     cleanStreak: int
+
+
+class RecoveryPlanOut(BaseModel):
+    habit_key: str
+    title: str
+    replacements: list[str]
+
+
+@router.get("/recovery/plans/{habit_key}", response_model=RecoveryPlanOut)
+async def get_recovery_plan(habit_key: str):
+    plan = RECOVERY_PLANS.get(habit_key)
+    if not plan:
+        return RecoveryPlanOut(
+            habit_key=habit_key,
+            title="Recovery Plan",
+            replacements=[],
+        )
+
+    return RecoveryPlanOut(
+        habit_key=habit_key,
+        title=plan["title"],
+        replacements=plan["replacements"],
+    )
 
 
 @router.post("/recovery/relapse")

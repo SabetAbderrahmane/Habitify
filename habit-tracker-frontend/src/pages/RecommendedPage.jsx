@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
-import { recommendedHabits } from "../data/recommendedHabits";
+import { useEffect, useState } from "react";
 import { createHabit } from "../lib/habits";
 import { useToast } from "../components/ToastProvider";
 import { useHabits } from "../context/HabitsContext";
+import { fetchRecommendedPack } from "../lib/content";
+import { fetchOnboardingProfile, saveOnboardingProfile } from "../lib/profile";
 
 const goalOptions = [
   { key: "focus", label: "Focus" },
@@ -23,11 +24,58 @@ export default function RecommendedPage() {
   const [goal, setGoal] = useState("focus");
   const [timeCommitment, setTimeCommitment] = useState("5 min");
   const [bestTime, setBestTime] = useState("Morning");
+
+  const [pack, setPack] = useState({ title: "", habits: [] });
+  const [profileLoading, setProfileLoading] = useState(true);
   const [busyName, setBusyName] = useState("");
 
-  const pack = useMemo(() => {
-    return recommendedHabits[goal];
-  }, [goal]);
+  // Load saved onboarding profile from backend
+  useEffect(() => {
+    (async () => {
+      try {
+        const profile = await fetchOnboardingProfile();
+        setGoal(profile.goal || "focus");
+        setTimeCommitment(profile.time_commitment || "5 min");
+        setBestTime(profile.best_time || "Morning");
+      } catch (e) {
+        toast.error("Failed to load profile", e?.message || "Unknown error");
+      } finally {
+        setProfileLoading(false);
+      }
+    })();
+  }, [toast]);
+
+  // Auto-save onboarding answers to backend
+  useEffect(() => {
+    if (profileLoading) return;
+
+    const saveProfile = async () => {
+      try {
+        await saveOnboardingProfile({
+          goal,
+          time_commitment: timeCommitment,
+          best_time: bestTime,
+        });
+      } catch (e) {
+        console.error("Failed to save onboarding profile", e);
+      }
+    };
+
+    saveProfile();
+  }, [goal, timeCommitment, bestTime, profileLoading]);
+
+  // Load recommended pack from backend when goal changes
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchRecommendedPack(goal);
+        setPack(data || { title: "", habits: [] });
+      } catch (e) {
+        toast.error("Failed to load recommendations", e?.message || "Unknown error");
+        setPack({ title: "", habits: [] });
+      }
+    })();
+  }, [goal, toast]);
 
   const addSuggestedHabit = async (habit) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -36,11 +84,17 @@ export default function RecommendedPage() {
     try {
       const created = await createHabit({
         name: habit.name,
-        progress: 0,
+        progress: habit.defaultProgress ?? 0,
         date: today,
       });
 
-      setHabits((prev) => [created, ...prev]);
+      setHabits((prev) => {
+        const filtered = prev.filter(
+          (h) => !(h.name === created.name && h.date === created.date)
+        );
+        return [created, ...filtered];
+      });
+
       toast.success("Habit added", habit.name);
     } catch (e) {
       toast.error("Could not add habit", e?.message || "Unknown error");
@@ -105,17 +159,19 @@ export default function RecommendedPage() {
 
       {/* Summary */}
       <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
-        <div className="text-lg font-semibold">{pack.title}</div>
+        <div className="text-lg font-semibold">
+          {pack.title || "Recommended Pack"}
+        </div>
         <div className="mt-2 text-white/60">
           Based on your current goal: <span className="text-white">{goal}</span>,
-          time: <span className="text-white">{timeCommitment}</span>,
-          and preferred time: <span className="text-white">{bestTime}</span>.
+          time: <span className="text-white"> {timeCommitment}</span>,
+          and preferred time: <span className="text-white"> {bestTime}</span>.
         </div>
       </div>
 
       {/* Suggested habits */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {pack.habits.map((habit) => (
+        {(pack.habits || []).map((habit) => (
           <div
             key={habit.name}
             className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 hover:bg-white/[0.07] transition"

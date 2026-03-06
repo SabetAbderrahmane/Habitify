@@ -11,14 +11,16 @@ import {
   FiCheckSquare,
   FiLogOut,
 } from "react-icons/fi";
+import { FiBell } from "react-icons/fi";
+import { useNotifications } from "../context/NotificationsContext";
 
-function Item({ to, icon: Icon, label }) {
+function Item({ to, icon: Icon, label, badge }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
         [
-          "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm ring-1 transition",
+          "relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm ring-1 transition",
           isActive
             ? "bg-white/15 text-white ring-white/20"
             : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10 hover:text-white",
@@ -27,14 +29,21 @@ function Item({ to, icon: Icon, label }) {
     >
       <Icon className="shrink-0" />
       <span>{label}</span>
+      {badge > 0 && (
+        <span className="absolute top-1 right-2 rounded-full bg-red-500 px-2 text-xs font-semibold text-white">
+          {badge}
+        </span>
+      )}
     </NavLink>
   );
 }
 
 export default function AppShell({ onLogout }) {
   const navigate = useNavigate();
+  const { notificationCount, setNotificationCount } = useNotifications();
 
   const logout = () => {
+    setNotificationCount(0);
     onLogout?.();
     navigate("/auth", { replace: true });
   };
@@ -54,6 +63,7 @@ export default function AppShell({ onLogout }) {
           <div className="space-y-2">
             <Item to="/app" icon={FiGrid} label="Dashboard" />
             <Item to="/app/checkin" icon={FiCheckSquare} label="Daily Check-in" />
+            <Item to="/app/notifications" icon={FiBell} label="Notifications" badge={notificationCount} />
             <Item to="/app/library" icon={FiBookOpen} label="Library" />
             <Item to="/app/recommended" icon={FiCompass} label="Recommended" />
             <Item to="/app/core" icon={FiHeart} label="Core Habits" />

@@ -108,6 +108,50 @@ def init_db() -> None:
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            goal TEXT NOT NULL DEFAULT 'focus',
+            time_commitment TEXT NOT NULL DEFAULT '5 min',
+            best_time TEXT NOT NULL DEFAULT 'Morning',
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS nudge_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            nudge_type TEXT NOT NULL,
+            habit_name TEXT DEFAULT '',
+            shown_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS scheduled_notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            nudge_type TEXT NOT NULL,
+            habit_name TEXT DEFAULT '',
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            action_path TEXT DEFAULT '',
+            scheduled_for TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """
+    )
+
+
 
 def seed_recommended_and_core_data() -> None:
     conn = get_connection()
