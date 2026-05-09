@@ -1,16 +1,32 @@
+from enum import Enum
+from datetime import date
+from typing import Optional
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api.deps import get_current_user
 from db import get_connection
 
 router = APIRouter(tags=["checkins"])
 
+class Mood(str, Enum):
+    HAPPY = "Happy"
+    GOOD = "Good"
+    NEUTRAL = "Neutral"
+    LOW = "Low"
+    SAD = "Sad"
+
+class Energy(str, Enum):
+    HIGH = "High"
+    GOOD = "Good"
+    MODERATE = "Moderate"
+    LOW = "Low"
+    DRAINED = "Drained"
 
 class CheckinIn(BaseModel):
-    date: str
-    mood: str = ""
-    energy: str = ""
+    date: date
+    mood: Mood = Mood.NEUTRAL
+    energy: Energy = Energy.MODERATE
     had_urges: bool = False
     difficult: str = ""
     note: str = ""
@@ -18,9 +34,9 @@ class CheckinIn(BaseModel):
 
 
 class CheckinOut(BaseModel):
-    date: str
-    mood: str = ""
-    energy: str = ""
+    date: date
+    mood: Mood = Mood.NEUTRAL
+    energy: Energy = Energy.MODERATE
     had_urges: bool = False
     difficult: str = ""
     note: str = ""

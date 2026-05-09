@@ -1,12 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import auth, habit, checkin, recovery, content, profile
+
+from api import auth, habit, checkin, recovery, content, profile, nudges, notifications, export_data, predictions
 from db import init_db, seed_recommended_and_core_data
-from api import nudges
-from api import notifications
-
-
+from config import CORS_ORIGINS
 
 
 @asynccontextmanager
@@ -20,7 +18,7 @@ app = FastAPI(title="Habit API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,6 +32,8 @@ app.include_router(content.router)
 app.include_router(profile.router)
 app.include_router(nudges.router)
 app.include_router(notifications.router)
+app.include_router(export_data.router)
+app.include_router(predictions.router)
 
 
 @app.get("/")

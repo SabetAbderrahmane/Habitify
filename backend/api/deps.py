@@ -3,8 +3,7 @@ from fastapi import Depends, Header, HTTPException
 
 from db import get_connection
 
-SECRET_KEY = "CHANGE_ME_TO_ENV_VAR_LATER"
-ALGORITHM = "HS256"
+from config import SECRET_KEY, JWT_ALGORITHM as ALGORITHM
 
 
 def get_current_user(authorization: str = Header(default=None)):

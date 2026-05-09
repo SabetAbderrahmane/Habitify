@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchLapseRisk } from "../lib/predictions";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -24,13 +25,12 @@ function isoKey(d) {
   return d.toISOString().slice(0, 10);
 }
 
-export default function InsightsPanel({ habits, goodThreshold = 70 }) {
+export default function InsightsPanel({ habits, logs, predictions, goodThreshold = 70 }) {
   const insights = useMemo(() => {
-    const list = (habits || [])
-      .filter((h) => h?.date)
-      .map((h) => ({
-        date: h.date,
-        p: clamp(Number(h.progress || 0), 0, 100),
+    const list = (logs || [])
+      .map((l) => ({
+        date: l.date,
+        p: clamp(Number(l.progress || 0), 0, 100),
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
@@ -40,6 +40,7 @@ export default function InsightsPanel({ habits, goodThreshold = 70 }) {
       const cur = dayMax.get(item.date) ?? 0;
       dayMax.set(item.date, Math.max(cur, item.p));
     }
+    
 
     const days = [...dayMax.entries()]
       .map(([date, p]) => ({ date, p, d: toDate(date) }))
@@ -99,48 +100,39 @@ export default function InsightsPanel({ habits, goodThreshold = 70 }) {
 
     const bestDays = weekdayRank.slice(0, 2).map((x) => x.name);
 
-    // Risk score (0..100)
-    // Higher if low consistency, negative trend, and streak is broken
-    let risk = 0;
-    risk += clamp(100 - consistency, 0, 100) * 0.55;
-    risk += clamp(-trend * 2.5, 0, 60) * 0.35; // if trend negative, increases risk
-    risk += streak === 0 ? 10 : 0;
+    // Risk calculation from AI predictions
+    // We use the highest risk habit as the primary signal
+    const maxRiskPrediction = predictions.length > 0 
+      ? predictions.reduce((prev, current) => (prev.lapse_risk_score > current.lapse_risk_score) ? prev : current)
+      : null;
 
-    risk = Math.round(clamp(risk, 0, 100));
-
-    const riskLabel =
-      risk < 25 ? "Low" : risk < 55 ? "Medium" : risk < 80 ? "High" : "Critical";
-
-    const nudge = (() => {
-      if (!days.length) return "Add your first habit to unlock insights.";
-      if (riskLabel === "Low")
-        return `You’re stable. Push a little: aim for ${goodThreshold}% today to extend your streak.`;
-      if (riskLabel === "Medium")
-        return `You’re slightly shaky. Plan a 5-minute version of your habit right now.`;
-      if (riskLabel === "High")
-        return `Risk is high. Do the smallest possible step today to avoid a streak reset.`;
-      return `Critical risk. Don’t negotiate—do a 2-minute action immediately to regain momentum.`;
-    })();
+    const aiRiskScore = maxRiskPrediction ? Math.round(maxRiskPrediction.lapse_risk_score * 100) : 0;
+    const aiRiskLabel = maxRiskPrediction ? maxRiskPrediction.risk_level : "Stable";
+    
+    // Nudge from AI factors
+    const aiNudge = maxRiskPrediction && maxRiskPrediction.factors.length > 0
+      ? `AI indicates risk for ${maxRiskPrediction.habit_name}: ${maxRiskPrediction.factors[0].toLowerCase()}.`
+      : "You’re on a stable path. Keep maintaining your core habits.";
 
     return {
-      risk,
-      riskLabel,
+      risk: aiRiskScore,
+      riskLabel: aiRiskLabel,
       consistency,
       trend: Math.round(trend),
       streak,
       bestDays,
       avgLast7: Math.round(avgLast7),
-      nudge,
+      nudge: aiNudge,
     };
-  }, [habits, goodThreshold]);
+  }, [logs, goodThreshold, predictions]);
 
   return (
     <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <div className="text-lg font-semibold">AI Insights</div>
+          <div className="text-lg font-semibold">AI Insights v2</div>
           <div className="mt-1 text-sm text-white/55">
-            Personal signals based on your recent activity
+            Real-time hybrid ML-based lapse prediction
           </div>
         </div>
 
@@ -148,7 +140,7 @@ export default function InsightsPanel({ habits, goodThreshold = 70 }) {
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-4">
-        <Metric title="Lapse Risk" value={`${insights.risk}%`} sub={insights.riskLabel} />
+        <Metric title="Lapse Risk (AI)" value={`${insights.risk}%`} sub={insights.riskLabel} />
         <Metric title="Consistency" value={`${insights.consistency}%`} sub="last 14 days" />
         <Metric
           title="Trend"
@@ -170,10 +162,10 @@ export default function InsightsPanel({ habits, goodThreshold = 70 }) {
         </div>
 
         <div className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/10">
-          <div className="text-sm text-white/60">Smart nudge</div>
+          <div className="text-sm text-white/60">Smart nudge (ML)</div>
           <div className="mt-2 text-sm leading-relaxed text-white/80">{insights.nudge}</div>
           <div className="mt-3 text-xs text-white/40">
-            v1 is rule-based. We’ll replace this with ML later.
+            Predictions powered by Hybrid LSTM-Tabular Model.
           </div>
         </div>
       </div>

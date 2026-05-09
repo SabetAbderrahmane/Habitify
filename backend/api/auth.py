@@ -1,17 +1,22 @@
 from datetime import datetime, timedelta
 
 import jwt
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 
 from db import get_connection
 
+from api.deps import get_current_user
+
 router = APIRouter(tags=["auth"])
 
+@router.get("/status")
+async def auth_status(current_user=Depends(get_current_user)):
+    return {"status": "authenticated", "email": current_user["email"]}
+
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
-SECRET_KEY = "CHANGE_ME_TO_ENV_VAR_LATER"
-ALGORITHM = "HS256"
+from config import SECRET_KEY, JWT_ALGORITHM as ALGORITHM, ACCESS_TOKEN_EXPIRE_HOURS
 
 
 class UserIn(BaseModel):
@@ -28,7 +33,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 def create_access_token(email: str) -> str:
-    expire = datetime.utcnow() + timedelta(hours=12)
+    expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     payload = {"sub": email, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
