@@ -47,6 +47,11 @@ export async function deleteHabitLog(logId) {
   return res.data;
 }
 
+export async function fetchAllHabitLogs() {
+  const res = await api.get("/habits/logs");
+  return res.data;
+}
+
 export async function fetchHabitNames() {
   const defs = await fetchHabitDefinitions();
   return [...new Set(defs.map(d => d.name))];

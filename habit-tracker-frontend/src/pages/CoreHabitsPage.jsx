@@ -1,6 +1,7 @@
+// src/pages/CoreHabitsPage.jsx
+
 import { useEffect, useMemo, useState } from "react";
 import { fetchCoreHabits } from "../lib/content";
-import { createHabit } from "../lib/habits";
 import { useToast } from "../components/ToastProvider";
 import { useHabits } from "../context/HabitsContext";
 
@@ -8,7 +9,7 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function wasMissedTwoDays(habits, habitName) {
+function wasMissedTwoDays(logs, habitName) {
   const today = new Date();
   const targetDates = [];
 
@@ -19,13 +20,19 @@ function wasMissedTwoDays(habits, habitName) {
   }
 
   return targetDates.every((date) => {
-    return !habits.some((h) => h.name === habitName && h.date === date && Number(h.progress || 0) > 0);
+    return !logs.some(
+      (h) =>
+        h.name === habitName &&
+        h.date === date &&
+        Number(h.progress || 0) > 0
+    );
   });
 }
 
 export default function CoreHabitsPage() {
-  const { habits, setHabits } = useHabits();
+  const { habitLogs, addHabit, refreshData } = useHabits();
   const toast = useToast();
+
   const [busyName, setBusyName] = useState("");
   const [coreHabits, setCoreHabits] = useState([]);
 
@@ -43,11 +50,14 @@ export default function CoreHabitsPage() {
 
   const statusMap = useMemo(() => {
     const map = new Map();
+    const today = todayISO();
 
     coreHabits.forEach((habit) => {
-      const today = todayISO();
-      const todayEntry = habits.find((h) => h.name === habit.name && h.date === today);
-      const missed2 = wasMissedTwoDays(habits, habit.name);
+      const todayEntry = habitLogs.find(
+        (h) => h.name === habit.name && h.date === today
+      );
+
+      const missed2 = wasMissedTwoDays(habitLogs, habit.name);
 
       map.set(habit.name, {
         todayProgress: todayEntry ? Number(todayEntry.progress || 0) : 0,
@@ -56,24 +66,22 @@ export default function CoreHabitsPage() {
     });
 
     return map;
-  }, [habits]);
+  }, [coreHabits, habitLogs]);
 
   const quickLog = async (habit) => {
     setBusyName(habit.name);
 
     try {
-      const created = await createHabit({
+      await addHabit({
         name: habit.name,
+        category: habit.category || "Health",
+        target: habit.target || "Daily",
+        frequency: "daily",
         progress: 100,
         date: todayISO(),
       });
 
-      setHabits((prev) => {
-        const filtered = prev.filter(
-          (h) => !(h.name === created.name && h.date === created.date)
-        );
-        return [created, ...filtered];
-      });
+      await refreshData();
 
       toast.success("Core habit completed", habit.name);
     } catch (e) {
@@ -99,12 +107,14 @@ export default function CoreHabitsPage() {
           return (
             <div
               key={habit.name}
-              className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 hover:bg-white/[0.07] transition"
+              className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/[0.07]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-lg font-semibold">{habit.name}</div>
-                  <div className="mt-2 text-sm text-white/60">{habit.description}</div>
+                  <div className="mt-2 text-sm text-white/60">
+                    {habit.description}
+                  </div>
                 </div>
 
                 <span className="rounded-xl bg-white px-3 py-1 text-xs font-semibold text-black ring-1 ring-white/20">
@@ -117,19 +127,24 @@ export default function CoreHabitsPage() {
                   <div className="text-xs text-white/50">Category</div>
                   <div className="font-semibold">{habit.category}</div>
                 </div>
+
                 <div>
                   <div className="text-xs text-white/50">Target</div>
                   <div className="font-semibold">{habit.target}</div>
                 </div>
+
                 <div>
                   <div className="text-xs text-white/50">Today</div>
-                  <div className="font-semibold">{status?.todayProgress || 0}%</div>
+                  <div className="font-semibold">
+                    {status?.todayProgress || 0}%
+                  </div>
                 </div>
               </div>
 
               {status?.missed2 ? (
                 <div className="mt-4 rounded-2xl bg-yellow-400/10 p-3 text-sm text-yellow-100 ring-1 ring-yellow-300/20">
-                  Friendly reminder: you missed this for 2 days. A small comeback today matters.
+                  Friendly reminder: you missed this for 2 days. A small comeback
+                  today matters.
                 </div>
               ) : null}
 
