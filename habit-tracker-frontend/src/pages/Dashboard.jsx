@@ -11,10 +11,8 @@ import { fetchCoreHabits } from "../lib/content";
 import { fetchTodayNudges } from "../lib/nudges";
 import { fetchLapseRisk } from "../lib/predictions";
 import { 
-  createHabitDefinition, 
   fetchHabitNames, 
   updateHabitDefinition,
-  deleteHabitDefinition,
   deleteHabitLog
 } from "../lib/habits";
 

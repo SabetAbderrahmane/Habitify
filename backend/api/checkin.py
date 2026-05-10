@@ -9,6 +9,45 @@ from db import get_connection
 
 router = APIRouter(tags=["checkins"])
 
+
+# ---------------------------------------------------------------------------
+# Value normalization helpers (backward compatibility with old DB values)
+# ---------------------------------------------------------------------------
+
+def normalize_mood(value) -> str:
+    mapping = {
+        "Great": "Happy",
+        "Happy": "Happy",
+        "Good": "Good",
+        "Medium": "Neutral",
+        "Neutral": "Neutral",
+        "Low": "Low",
+        "Bad": "Sad",
+        "Sad": "Sad",
+        "": "Neutral",
+        None: "Neutral",
+    }
+    return mapping.get(value, "Neutral")
+
+
+def normalize_energy(value) -> str:
+    mapping = {
+        "High": "High",
+        "Good": "Good",
+        "Medium": "Moderate",
+        "Moderate": "Moderate",
+        "Low": "Low",
+        "Drained": "Drained",
+        "": "Moderate",
+        None: "Moderate",
+    }
+    return mapping.get(value, "Moderate")
+
+
+# ---------------------------------------------------------------------------
+# Enums and Pydantic models
+# ---------------------------------------------------------------------------
+
 class Mood(str, Enum):
     HAPPY = "Happy"
     GOOD = "Good"
@@ -16,12 +55,14 @@ class Mood(str, Enum):
     LOW = "Low"
     SAD = "Sad"
 
+
 class Energy(str, Enum):
     HIGH = "High"
     GOOD = "Good"
     MODERATE = "Moderate"
     LOW = "Low"
     DRAINED = "Drained"
+
 
 class CheckinIn(BaseModel):
     date: date
@@ -43,6 +84,10 @@ class CheckinOut(BaseModel):
     completed: bool = False
 
 
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
 @router.get("/checkins/{date}", response_model=CheckinOut)
 async def get_checkin(date: str, current_user=Depends(get_current_user)):
     conn = get_connection()
@@ -61,8 +106,8 @@ async def get_checkin(date: str, current_user=Depends(get_current_user)):
 
     return CheckinOut(
         date=row["date"],
-        mood=row["mood"] or "",
-        energy=row["energy"] or "",
+        mood=normalize_mood(row["mood"]),
+        energy=normalize_energy(row["energy"]),
         had_urges=bool(row["had_urges"]),
         difficult=row["difficult"] or "",
         note=row["note"] or "",
@@ -133,8 +178,8 @@ async def save_checkin(payload: CheckinIn, current_user=Depends(get_current_user
 
     return CheckinOut(
         date=row["date"],
-        mood=row["mood"] or "",
-        energy=row["energy"] or "",
+        mood=normalize_mood(row["mood"]),
+        energy=normalize_energy(row["energy"]),
         had_urges=bool(row["had_urges"]),
         difficult=row["difficult"] or "",
         note=row["note"] or "",

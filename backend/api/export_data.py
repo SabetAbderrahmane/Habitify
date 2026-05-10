@@ -32,10 +32,18 @@ def fetch_all_user_data(user_id: int):
 
     habit_logs = conn.execute(
         """
-        SELECT id, user_id, name, progress, date, created_at
-        FROM habit_logs
-        WHERE user_id = ?
-        ORDER BY date ASC, name ASC
+        SELECT
+            hl.id,
+            hl.user_id,
+            hl.habit_id,
+            h.name,
+            hl.progress,
+            hl.date,
+            hl.created_at
+        FROM habit_logs hl
+        JOIN habits h ON hl.habit_id = h.id
+        WHERE hl.user_id = ?
+        ORDER BY hl.date ASC, h.name ASC
         """,
         (user_id,),
     ).fetchall()
