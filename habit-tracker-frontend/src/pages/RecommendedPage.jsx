@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { createHabit } from "../lib/habits";
 import { useToast } from "../components/ToastProvider";
 import { useHabits } from "../context/HabitsContext";
 import { fetchRecommendedPack } from "../lib/content";
@@ -19,7 +18,7 @@ const dayOptions = ["Morning", "Afternoon", "Evening", "Late night"];
 
 export default function RecommendedPage() {
   const toast = useToast();
-  const { setHabits } = useHabits();
+  const { addHabit, refreshData } = useHabits();
 
   const [goal, setGoal] = useState("focus");
   const [timeCommitment, setTimeCommitment] = useState("5 min");
@@ -82,19 +81,13 @@ export default function RecommendedPage() {
     setBusyName(habit.name);
 
     try {
-      const created = await createHabit({
+      await addHabit({
         name: habit.name,
         progress: habit.defaultProgress ?? 0,
         date: today,
       });
 
-      setHabits((prev) => {
-        const filtered = prev.filter(
-          (h) => !(h.name === created.name && h.date === created.date)
-        );
-        return [created, ...filtered];
-      });
-
+      await refreshData();
       toast.success("Habit added", habit.name);
     } catch (e) {
       toast.error("Could not add habit", e?.message || "Unknown error");

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
 
@@ -6,7 +6,7 @@ import { useHabits } from "../context/HabitsContext";
 import { useToast } from "../components/ToastProvider";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EditHabitModal from "../components/EditHabitModal";
-import { createHabit, deleteHabit, updateHabit } from "../lib/habits";
+import { deleteHabitLog, fetchAllHabitLogs } from "../lib/habits";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -38,7 +38,11 @@ export default function HabitDetail() {
   const { habitName } = useParams();
   const name = decodeURIComponent(habitName || "");
 
-  const { habits, setHabits } = useHabits();
+  const { 
+    habitDefinitions, 
+    refreshData, 
+    updateProgress 
+  } = useHabits();
   const toast = useToast();
 
   const [editOpen, setEditOpen] = useState(false);
@@ -49,18 +53,51 @@ export default function HabitDetail() {
 
   const today = toDateKey(new Date());
 
-  const { series, stats, recentRows, todayRow } = useMemo(() => {
-    const logs = (habits || []).filter((h) => (h?.name || "") === name);
+  const [allLogs, setAllLogs] = useState([]);
 
-    // Aggregate by day with an id we can edit/delete:
-    // pick the row with max progress for each day
-    const byDay = new Map(); // date -> {id, date, progress}
-    for (const h of logs) {
-      if (!h?.date) continue;
-      const p = clamp(Number(h?.progress || 0), 0, 100);
-      const cur = byDay.get(h.date);
+  useEffect(() => {
+    let alive = true;
+
+    async function loadAllLogs() {
+      try {
+        const data = await fetchAllHabitLogs();
+        if (alive) {
+          setAllLogs(Array.isArray(data) ? data : []);
+        }
+      } catch (e) {
+        toast.error("Failed to load habit history", e?.message || "Unknown error");
+        if (alive) {
+          setAllLogs([]);
+        }
+      }
+    }
+
+    loadAllLogs();
+
+    return () => {
+      alive = false;
+    };
+  }, [toast]);
+
+  const habitId = useMemo(() => {
+    const def = habitDefinitions.find(d => (d.name || "") === name);
+    return def?.id;
+  }, [habitDefinitions, name]);
+
+  const { series, stats, recentRows, todayRow } = useMemo(() => {
+    // Filter logs for this specific habit definition
+    const logs = (allLogs || []).filter((l) => {
+      return l.habit_id === habitId || l.name === name;
+    });
+
+    // Aggregate by day with an id we can edit/delete
+    const byDay = new Map(); // date -> {id, date, progress, name}
+    for (const l of logs) {
+      if (!l?.date) continue;
+      const p = clamp(Number(l?.progress || 0), 0, 100);
+      const cur = byDay.get(l.date);
       if (!cur || p >= cur.progress) {
-        byDay.set(h.date, { id: h.id, date: h.date, progress: p, name: h.name });
+        byDay.set(l.date, { id: l.id, date: l.date, progress: p, name: l.name });
       }
     }
 
@@ -87,7 +124,12 @@ export default function HabitDetail() {
       recentRows: recentList,
       todayRow: todayEntry,
     };
-  }, [habits, name, today]);
+  }, [allLogs, habitId, name, today]);
+
+  const reloadAllLogs = async () => {
+    const data = await fetchAllHabitLogs();
+    setAllLogs(Array.isArray(data) ? data : []);
+  };
 
   const openEditorFor = (h) => {
     setEditHabit(h);
@@ -95,44 +137,52 @@ export default function HabitDetail() {
   };
 
   const bumpToday = async () => {
+    if (!habitId) {
+      toast.error("Habit definition not found");
+      return;
+    }
     try {
-      if (todayRow?.id) {
-        const next = Math.min(100, Number(todayRow.progress || 0) + 10);
-        const updated = await updateHabit(todayRow.id, { progress: next });
-        setHabits((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-        toast.success("Progress updated", `${name} → ${next}%`);
-      } else {
-        const created = await createHabit({ name, progress: 10, date: today });
-        setHabits((prev) => [created, ...prev]);
-        toast.success("Created today log", `${name} • 10%`);
-      }
+      const currentProgress = todayRow?.progress || 0;
+      const next = Math.min(100, Number(currentProgress) + 10);
+      await updateProgress(habitId, next, today);
+      await refreshData();
+      await reloadAllLogs();
+      toast.success("Progress updated", `${name} → ${next}%`);
     } catch (e) {
       toast.error("Bump failed", e?.message || "Unknown error");
     }
   };
 
   const editToday = async () => {
+    if (!habitId) {
+      toast.error("Habit definition not found");
+      return;
+    }
     try {
       if (todayRow?.id) {
         openEditorFor(todayRow);
         return;
       }
-      // Create a 0% row for today then open edit
-      const created = await createHabit({ name, progress: 0, date: today });
-      setHabits((prev) => [created, ...prev]);
+      // Log 0% for today first to create the entry
+      const created = await updateProgress(habitId, 0, today);
+      await refreshData();
+      await reloadAllLogs();
       openEditorFor(created);
-      toast.success("Created today log", "Now edit progress & name if needed");
+      toast.success("Created today log", "Now edit progress");
     } catch (e) {
       toast.error("Could not start edit", e?.message || "Unknown error");
     }
   };
 
   const onSaveEdit = async (patch) => {
-    if (!editHabit?.id) return;
+    if (!habitId) return;
     try {
-      const updated = await updateHabit(editHabit.id, patch);
-      setHabits((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-      toast.success("Saved", `${updated.name} • ${updated.progress}%`);
+      // In this view, edits are always to log progress
+      const targetDate = editHabit?.date || today;
+      await updateProgress(habitId, patch.progress || 0, targetDate);
+      await refreshData();
+      await reloadAllLogs();
+      toast.success("Saved progress", `${name} • ${patch.progress}%`);
     } catch (e) {
       toast.error("Save failed", e?.message || "Unknown error");
       throw e;
@@ -147,9 +197,10 @@ export default function HabitDetail() {
   const confirmDelete = async () => {
     if (!pendingDelete?.id) return;
     try {
-      await deleteHabit(pendingDelete.id);
-      setHabits((prev) => prev.filter((x) => x.id !== pendingDelete.id));
-      toast.success("Deleted", pendingDelete.name);
+      await deleteHabitLog(pendingDelete.id);
+      await refreshData();
+      await reloadAllLogs();
+      toast.success("Deleted log entry", `${name} on ${pendingDelete.date}`);
     } catch (e) {
       toast.error("Delete failed", e?.message || "Unknown error");
     } finally {

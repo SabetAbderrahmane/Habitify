@@ -9,7 +9,12 @@ import { useHabits } from "../context/HabitsContext";
 import { useToast } from "../components/ToastProvider";
 import { fetchCoreHabits } from "../lib/content";
 import { fetchTodayNudges } from "../lib/nudges";
-import { createHabit, deleteHabit, fetchHabitNames, updateHabit } from "../lib/habits";
+import { fetchLapseRisk } from "../lib/predictions";
+import { 
+  fetchHabitNames, 
+  updateHabitDefinition,
+  deleteHabitLog
+} from "../lib/habits";
 
 function missedTwoDays(habits, habitName) {
   const today = new Date();
@@ -30,22 +35,37 @@ function missedTwoDays(habits, habitName) {
 
 export default function Dashboard() {
   const {
-    habits,
-    loadingHabits,
-    habitsError,
-    reloadHabits,
+    habitDefinitions,
+    habitLogs,
+    selectedDate,
+    setSelectedDate,
+    loading: loadingHabits,
+    error: habitsError,
+    refreshData,
     addHabit,
-    setHabits,
+    updateProgress,
   } = useHabits();
 
   const toast = useToast();
 
   const [nudges, setNudges] = useState([]);
+  const [predictions, setPredictions] = useState([]);
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [habitNames, setHabitNames] = useState([]);
   const [coreHabits, setCoreHabits] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchLapseRisk();
+        setPredictions(Array.isArray(data) ? data : []);
+      } catch {
+        setPredictions([]);
+      }
+    })();
+  }, []);
 
   // filters
   const [q, setQ] = useState("");
@@ -63,21 +83,28 @@ export default function Dashboard() {
     []
   );
 
+  const habitsWithLogs = useMemo(() => {
+    // If date filter is not "all", we might want to see all definitions for that period
+    // or just the logs. For "today", "week", "month", we'll show logs.
+    // For now, let's keep it similar to before: list of logs.
+    return habitLogs;
+  }, [habitLogs]);
+
   const stats = useMemo(() => {
-    const total = habits.length;
+    const total = habitLogs.length;
     const avg = total
-      ? Math.round(habits.reduce((a, h) => a + Number(h.progress || 0), 0) / total)
+      ? Math.round(habitLogs.reduce((a, h) => a + Number(h.progress || 0), 0) / total)
       : 0;
-    const best = total ? Math.max(...habits.map((h) => Number(h.progress || 0))) : 0;
+    const best = total ? Math.max(...habitLogs.map((h) => Number(h.progress || 0))) : 0;
     return { total, avg, best };
-  }, [habits]);
+  }, [habitLogs]);
 
   const missedCoreHabits = useMemo(() => {
-    return coreHabits.filter((habit) => missedTwoDays(habits, habit.name));
-  }, [habits, coreHabits]);
+    return coreHabits.filter((habit) => missedTwoDays(habitLogs, habit.name));
+  }, [habitLogs, coreHabits]);
 
   const filteredHabits = useMemo(() => {
-    let arr = habits;
+    let arr = habitLogs;
 
     const s = q.trim().toLowerCase();
     if (s) arr = arr.filter((h) => (h.name || "").toLowerCase().includes(s));
@@ -105,7 +132,7 @@ export default function Dashboard() {
     if (sort === "progressDesc") arr = [...arr].sort((a, b) => byProg(b, a));
 
     return arr;
-  }, [habits, q, dateFilter, statusFilter, sort, todayISO, weekAgoISO, monthAgoISO]);
+  }, [habitLogs, q, dateFilter, statusFilter, sort, todayISO, weekAgoISO, monthAgoISO]);
 
   useEffect(() => {
     (async () => {
@@ -132,7 +159,7 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        await reloadHabits();
+        await refreshData();
       } catch {
         toast.error(
           "Failed to load habits",
@@ -162,9 +189,9 @@ export default function Dashboard() {
   const onCreate = async (habit) => {
     try {
       await addHabit(habit);
-      await reloadHabits();
+      await refreshData();
       await refreshNudges();
-      toast.success("Habit added", `${habit.name} • ${habit.progress}%`);
+      toast.success("Habit added", habit.name);
 
       try {
         const names = await fetchHabitNames();
@@ -187,10 +214,11 @@ export default function Dashboard() {
     if (!pendingDelete) return;
 
     try {
-      await deleteHabit(pendingDelete.id);
-      setHabits((prev) => prev.filter((h) => h.id !== pendingDelete.id));
+      // In this context, we are deleting a log entry
+      await deleteHabitLog(pendingDelete.id);
+      await refreshData();
       await refreshNudges();
-      toast.success("Deleted", pendingDelete.name);
+      toast.success("Deleted log entry", pendingDelete.name);
     } catch (e) {
       toast.error("Delete failed", e?.message || "Unknown error");
     } finally {
@@ -201,13 +229,19 @@ export default function Dashboard() {
 
   const handleUpdate = async (habit, patch) => {
     try {
-      const updated = await updateHabit(habit.id, patch);
-      setHabits((prev) => prev.map((h) => (h.id === updated.id ? updated : h)));
+      // If it's a habit definition update (name change), we update the definition
+      // If it's a progress update, we update the log
+      let updated;
+      if (patch.progress !== undefined) {
+        updated = await updateProgress(habit.habit_id || habit.id, patch.progress, habit.date);
+      } else {
+        // Assume other patches are definition updates
+        updated = await updateHabitDefinition(habit.habit_id || habit.id, patch);
+      }
+      
+      await refreshData();
       await refreshNudges();
-      toast.success("Saved", `${updated.name} • ${updated.progress}%`);
-
-      const names = await fetchHabitNames();
-      setHabitNames(Array.isArray(names) ? names : []);
+      toast.success("Saved", `${updated.name || habit.name} • ${updated.progress || patch.progress}%`);
     } catch (e) {
       toast.error("Update failed", e?.message || "Unknown error");
       throw e;
@@ -216,26 +250,15 @@ export default function Dashboard() {
 
   const handleBumpToday = async (habit) => {
     const today = new Date().toISOString().slice(0, 10);
-    const isTodayRow = habit.date === today;
+    const habitId = habit.habit_id || habit.id;
 
     try {
-      if (isTodayRow) {
-        const next = Math.min(100, Number(habit.progress || 0) + 10);
-        await handleUpdate(habit, { progress: next });
-      } else {
-        const created = await createHabit({
-          name: habit.name,
-          progress: 10,
-          date: today,
-        });
-
-        setHabits((prev) => [created, ...prev]);
-
-        const names = await fetchHabitNames();
-        setHabitNames(Array.isArray(names) ? names : []);
-        await refreshNudges();
-        toast.success("Logged today", `${habit.name} • 10%`);
-      }
+      const currentProgress = habit.date === today ? habit.progress : 0;
+      const next = Math.min(100, Number(currentProgress || 0) + 10);
+      await updateProgress(habitId, next, today);
+      await refreshData();
+      await refreshNudges();
+      toast.success("Logged today", `${habit.name} • ${next}%`);
     } catch (e) {
       toast.error("Bump failed", e?.message || "Unknown error");
     }
@@ -255,7 +278,7 @@ export default function Dashboard() {
         <div className="flex gap-3">
           <button
             onClick={async () => {
-              await reloadHabits();
+              await refreshData();
               await refreshNudges();
             }}
             className="rounded-xl bg-white/10 px-4 py-2 text-sm ring-1 ring-white/15 hover:bg-white/15"
@@ -381,13 +404,13 @@ export default function Dashboard() {
 
         <div className="mt-3 text-xs text-white/45">
           Showing <span className="text-white">{filteredHabits.length}</span> of{" "}
-          <span className="text-white">{habits.length}</span>
+          <span className="text-white">{habitLogs.length}</span>
         </div>
       </div>
 
       {/* Insights + Calendar */}
-      <InsightsPanel habits={habits} />
-      <StreakCalendar habits={habits} />
+      <InsightsPanel habits={habitDefinitions} logs={habitLogs} predictions={predictions} />
+      <StreakCalendar habits={habitLogs} />
 
       {habitsError ? (
         <div className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200 ring-1 ring-red-300/20">

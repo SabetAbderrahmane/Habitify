@@ -22,10 +22,13 @@ function saveFavs(favs) {
 
 export default function AddHabitModal({ open, onClose, onCreate, habitNames = [] }) {
   const [name, setName] = useState("");
+  const [category, setCategory] = useState("Other");
   const [progress, setProgress] = useState(0);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+
+  const CATEGORIES = ["Health", "Productivity", "Mindfulness", "Relationships", "Other"];
 
   // Templates
   const [query, setQuery] = useState("");
@@ -83,7 +86,12 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
     setErr("");
     setBusy(true);
     try {
-      await onCreate?.({ name: name.trim(), progress: Number(progress), date });
+      await onCreate?.({ 
+        name: name.trim(), 
+        category,
+        progress: Number(progress), 
+        date 
+      });
       setName("");
       setProgress(0);
       setDate(new Date().toISOString().slice(0, 10));
@@ -252,6 +260,26 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
                 required
                 minLength={2}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-white/60">Category</label>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={`rounded-xl px-3 py-1.5 text-xs transition ring-1 ${
+                      category === cat
+                        ? "bg-white text-black ring-white/20"
+                        : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

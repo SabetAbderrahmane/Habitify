@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pydantic[email]
+passlib
+PyJWT
+torch
+python-dotenv
+python-multipart
+python-dateutil
