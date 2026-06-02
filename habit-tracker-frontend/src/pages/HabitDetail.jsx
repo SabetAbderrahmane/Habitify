@@ -1,12 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
+import { FiArrowLeft, FiEdit3, FiPlus, FiTrendingUp } from "react-icons/fi";
 
 import { useHabits } from "../context/HabitsContext";
 import { useToast } from "../components/ToastProvider";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EditHabitModal from "../components/EditHabitModal";
 import { deleteHabitLog, fetchAllHabitLogs } from "../lib/habits";
+import { fetchLapseRisk } from "../lib/predictions";
+import Badge from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import EmptyState from "../components/ui/EmptyState";
+import PageHeader from "../components/ui/PageHeader";
+import ProgressBar from "../components/ui/ProgressBar";
+import Skeleton from "../components/ui/Skeleton";
+import StatCard from "../components/ui/StatCard";
+import Tabs from "../components/ui/Tabs";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -50,15 +61,19 @@ export default function HabitDetail() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const today = toDateKey(new Date());
 
   const [allLogs, setAllLogs] = useState([]);
+  const [loadingLogs, setLoadingLogs] = useState(true);
+  const [predictions, setPredictions] = useState([]);
 
   useEffect(() => {
     let alive = true;
 
     async function loadAllLogs() {
+      setLoadingLogs(true);
       try {
         const data = await fetchAllHabitLogs();
         if (alive) {
@@ -69,6 +84,8 @@ export default function HabitDetail() {
         if (alive) {
           setAllLogs([]);
         }
+      } finally {
+        if (alive) setLoadingLogs(false);
       }
     }
 
@@ -78,6 +95,21 @@ export default function HabitDetail() {
       alive = false;
     };
   }, [toast]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const data = await fetchLapseRisk();
+        if (alive) setPredictions(Array.isArray(data) ? data : []);
+      } catch {
+        if (alive) setPredictions([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const habitId = useMemo(() => {
     const def = habitDefinitions.find(d => (d.name || "") === name);
@@ -125,6 +157,10 @@ export default function HabitDetail() {
       todayRow: todayEntry,
     };
   }, [allLogs, habitId, name, today]);
+
+  const risk = useMemo(() => {
+    return predictions.find((item) => item.habit_id === habitId || item.habit_name === name) || null;
+  }, [habitId, name, predictions]);
 
   const reloadAllLogs = async () => {
     const data = await fetchAllHabitLogs();
@@ -211,129 +247,195 @@ export default function HabitDetail() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="text-sm text-white/50">
-            <Link to="/app/dashboard" className="hover:text-white/80">
-              Dashboard
-            </Link>{" "}
-            / Habit
-          </div>
-          <h1 className="mt-2 text-3xl font-semibold">{name}</h1>
-          <p className="mt-2 text-white/60">Progress history, performance, and streaks.</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/app/dashboard"
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm ring-1 ring-white/15 hover:bg-white/15"
-          >
-            ← Back
-          </Link>
-
-          <button
+      <PageHeader
+        eyebrow="Habit analytics"
+        title={name}
+        description="Progress history, risk signals, and recent logs from your real habit data."
+        actions={
+          <>
+            <Button as={Link} to="/app" variant="secondary">
+              <FiArrowLeft aria-hidden="true" />
+              Back
+            </Button>
+            <Button
             onClick={bumpToday}
-            className="rounded-xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-4 py-2 text-sm font-semibold text-black"
-            type="button"
           >
+              <FiPlus aria-hidden="true" />
             +10% Today
-          </button>
+            </Button>
 
-          <button
+            <Button
+              variant="secondary"
             onClick={editToday}
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm ring-1 ring-white/15 hover:bg-white/15"
-            type="button"
           >
+              <FiEdit3 aria-hidden="true" />
             Edit Today
-          </button>
-        </div>
+            </Button>
+          </>
+        }
+      />
+
+      <div className="flex overflow-x-auto">
+        <Tabs
+          value={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Habit detail sections"
+          tabs={[
+            { value: "overview", label: "Overview" },
+            { value: "history", label: "History" },
+            { value: "risk", label: "AI Risk" },
+            { value: "logs", label: "Recent Logs" },
+          ]}
+        />
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat title="Total days" value={stats.total} sub="Logged" />
-        <Stat title="Average" value={`${stats.avg}%`} sub="Overall" />
-        <Stat title="Best" value={`${stats.best}%`} sub="Peak day" />
-        <Stat title="Streak" value={`${stats.streak}d`} sub="≥ 70%" />
-      </div>
-
-      {/* Chart */}
-      <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <div className="text-lg font-semibold">Progress over time</div>
-            <div className="mt-1 text-sm text-white/60">Max progress per day</div>
+      {loadingLogs ? (
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-28" />
+            ))}
           </div>
-          <div className="text-sm text-white/60">Last: {stats.last}%</div>
+          <Skeleton className="h-80" />
         </div>
-
-        <div className="mt-6 h-[260px]">
-          {series.length === 0 ? (
-            <div className="grid h-full place-items-center text-white/60">No logs yet for this habit.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={series}>
-                <XAxis dataKey="date" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip
-                  formatter={(v) => [`${v}%`, "Progress"]}
-                  labelFormatter={(lbl, payload) => payload?.[0]?.payload?.fullDate || lbl}
-                />
-                <Line type="monotone" dataKey="progress" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
-
-      {/* Recent logs (editable) */}
-      <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <div className="text-lg font-semibold">Recent days</div>
-            <div className="mt-1 text-sm text-white/60">Edit or delete any day</div>
+      ) : activeTab === "overview" ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-4">
+            <StatCard label="Total days" value={stats.total} sub="Logged" icon={FiTrendingUp} />
+            <StatCard label="Average" value={`${stats.avg}%`} sub="Overall" icon={FiTrendingUp} tone="slate" />
+            <StatCard label="Best" value={`${stats.best}%`} sub="Peak day" icon={FiTrendingUp} tone="green" />
+            <StatCard label="Streak" value={`${stats.streak}d`} sub="≥ 70%" icon={FiTrendingUp} tone="amber" />
           </div>
-        </div>
-
-        {recentRows.length === 0 ? (
-          <div className="mt-6 text-white/60">Nothing yet.</div>
-        ) : (
-          <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-white/10">
-            <div className="grid grid-cols-12 bg-white/5 px-4 py-3 text-xs text-white/60">
-              <div className="col-span-5">Date</div>
-              <div className="col-span-3">Progress</div>
-              <div className="col-span-4 text-right">Actions</div>
+          <Card>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="text-lg font-semibold text-slate-950">Progress over time</div>
+                <div className="mt-1 text-sm text-slate-600">Max progress per day</div>
+              </div>
+              <Badge tone={stats.last >= 80 ? "green" : "slate"}>Last: {stats.last}%</Badge>
             </div>
 
+            <div className="mt-6 h-[260px]">
+              {series.length === 0 ? (
+                <EmptyState title="No logs yet" description="Use quick log to create the first entry for this habit." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={series}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                    <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      formatter={(v) => [`${v}%`, "Progress"]}
+                      labelFormatter={(lbl, payload) => payload?.[0]?.payload?.fullDate || lbl}
+                    />
+                    <Line type="monotone" dataKey="progress" stroke="#3337a6" strokeWidth={2} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+        </>
+      ) : activeTab === "history" ? (
+        <Card>
+          <div className="text-lg font-semibold text-slate-950">History</div>
+          <div className="mt-5 space-y-3">
+            {series.length === 0 ? (
+              <EmptyState title="No history yet" description="Log this habit to build a timeline." />
+            ) : (
+              series.map((point) => (
+                <div key={point.fullDate} className="rounded-xl border border-slate-200 p-4">
+                  <div className="mb-2 flex items-center justify-between text-sm">
+                    <span className="font-semibold text-slate-800">{point.fullDate}</span>
+                    <span className="text-slate-500">{point.progress}%</span>
+                  </div>
+                  <ProgressBar value={point.progress} />
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+      ) : activeTab === "risk" ? (
+        <Card className="border-indigo-100 bg-indigo-50/50">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="text-lg font-semibold text-[#3337a6]">AI risk signal</div>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                This uses the existing lapse-risk API and does not invent confidence or factors.
+              </p>
+            </div>
+            {risk ? <Badge tone={risk.risk_level === "High" ? "red" : risk.risk_level === "Medium" ? "amber" : "green"}>{risk.risk_level}</Badge> : null}
+          </div>
+          {!risk ? (
+            <EmptyState title="No prediction available" description="The model did not return a prediction for this habit yet." />
+          ) : (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl bg-white p-4 ring-1 ring-indigo-100">
+                <div className="text-sm font-semibold text-slate-500">Risk score</div>
+                <div className="mt-2 text-3xl font-bold text-slate-950">{Math.round(Number(risk.lapse_risk_score || 0) * 100)}%</div>
+                <div className="mt-1 text-sm text-slate-500">Source: {risk.source}</div>
+              </div>
+              <div className="rounded-xl bg-white p-4 ring-1 ring-indigo-100">
+                <div className="text-sm font-semibold text-slate-500">Recommendation</div>
+                <div className="mt-2 text-sm leading-6 text-slate-700">{risk.recommendation || "No recommendation returned."}</div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="text-sm font-semibold text-slate-500">Factors</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(risk.factors || []).map((factor) => (
+                    <Badge key={factor} tone="indigo">{factor}</Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+      ) : (
+        <Card>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <div className="text-lg font-semibold text-slate-950">Recent days</div>
+              <div className="mt-1 text-sm text-slate-600">Edit or delete any day</div>
+            </div>
+          </div>
+
+          {recentRows.length === 0 ? (
+            <EmptyState title="Nothing yet" description="Recent logs will appear here once you track this habit." />
+          ) : (
+            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+              <div className="grid grid-cols-12 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <div className="col-span-5">Date</div>
+                <div className="col-span-3">Progress</div>
+                <div className="col-span-4 text-right">Actions</div>
+              </div>
             {recentRows.map((r) => (
               <div
                 key={r.id || r.date}
-                className="grid grid-cols-12 items-center px-4 py-3 text-sm ring-1 ring-white/5 hover:bg-white/[0.04]"
+                className="grid grid-cols-12 items-center border-t border-slate-100 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
               >
                 <div className="col-span-5">{r.date}</div>
                 <div className="col-span-3">{r.progress}%</div>
                 <div className="col-span-4 flex justify-end gap-2">
-                  <button
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     onClick={() => openEditorFor(r)}
-                    className="rounded-lg bg-white/10 px-3 py-1 text-xs ring-1 ring-white/15 hover:bg-white/15"
-                    type="button"
                   >
                     Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     onClick={() => requestDelete(r)}
-                    className="rounded-lg bg-red-500/20 px-3 py-1 text-xs text-red-100 ring-1 ring-red-300/20 hover:bg-red-500/25"
-                    type="button"
+                    className="text-red-700 hover:bg-red-50"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+          )}
+        </Card>
+      )}
 
       {/* Modals */}
       <EditHabitModal
@@ -363,12 +465,3 @@ export default function HabitDetail() {
   );
 }
 
-function Stat({ title, value, sub }) {
-  return (
-    <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-      <div className="text-sm text-white/60">{title}</div>
-      <div className="mt-2 text-3xl font-semibold">{value}</div>
-      <div className="mt-1 text-xs text-white/45">{sub}</div>
-    </div>
-  );
-}

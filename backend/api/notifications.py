@@ -27,6 +27,10 @@ class GenerateNotificationsOut(BaseModel):
     skipped: int
 
 
+class UnreadCountOut(BaseModel):
+    count: int
+
+
 def utc_now_iso() -> str:
     return datetime.utcnow().isoformat(timespec="seconds")
 
@@ -123,6 +127,21 @@ async def get_pending_notifications(current_user=Depends(get_current_user)):
         )
         for row in rows
     ]
+
+
+@router.get("/notifications/unread-count", response_model=UnreadCountOut)
+async def get_unread_notification_count(current_user=Depends(get_current_user)):
+    conn = get_connection()
+    row = conn.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM scheduled_notifications
+        WHERE user_id = ? AND status = 'pending'
+        """,
+        (current_user["id"],),
+    ).fetchone()
+    conn.close()
+    return UnreadCountOut(count=row["count"] if row else 0)
 
 
 @router.post("/notifications/{notification_id}/dismiss")

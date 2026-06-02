@@ -107,7 +107,7 @@ export default function ExportReportButton({ habits, logs, predictions }) {
     <button
       onClick={generatePDF}
       disabled={busy}
-      className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium ring-1 ring-white/15 hover:bg-white/15 transition active:scale-95 disabled:opacity-50"
+      className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-4 focus:ring-[#3337a6]/10 active:scale-95 disabled:opacity-60"
     >
       <HiDownload className="h-4 w-4" />
       {busy ? "Generating..." : "Export Progress Report"}

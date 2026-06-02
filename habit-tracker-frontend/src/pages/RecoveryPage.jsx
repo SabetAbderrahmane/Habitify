@@ -18,6 +18,12 @@ const habitOptions = [
 const frequencyOptions = ["Daily", "A few times a week", "Weekly", "Irregularly"];
 const timeOptions = ["Morning", "Afternoon", "Evening", "Late night"];
 const triggerOptions = ["Stress", "Boredom", "Social pressure", "Low energy", "Anxiety", "Habit / autopilot"];
+const fallbackReplacements = {
+  smoking: ["Drink cold water", "Take a 5-minute walk", "Do 10 slow breaths"],
+  sleep_late: ["Start a 10-minute wind-down", "Put the phone away", "Dim the lights"],
+  alcohol: ["Make tea or sparkling water", "Leave the room", "Text an accountability contact"],
+  doomscrolling: ["Lock the phone for 10 minutes", "Stretch", "Open a book"],
+};
 
 export default function RecoveryPage() {
   const toast = useToast();
@@ -36,8 +42,11 @@ export default function RecoveryPage() {
   });
   const [plan, setPlan] = useState({ title: "", replacements: [] });
 
-  const replacementOptions = plan?.replacements || [];
+  const replacementOptions =
+    plan?.replacements?.length ? plan.replacements : fallbackReplacements[habit] || [];
   const selectedReplacement = replacement || replacementOptions[0] || "";
+  const habitLabel = habitOptions.find((h) => h.key === habit)?.label || "habit";
+  const planTitle = plan?.title || `Reduce ${habitLabel}`;
 
   useEffect(() => {
     (async () => {
@@ -100,8 +109,8 @@ export default function RecoveryPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold">Recovery / Quit Lab</h1>
-        <p className="mt-2 text-white/60">
+        <h1 className="text-3xl font-semibold text-[var(--color-text-primary)]">Recovery / Quit Lab</h1>
+        <p className="mt-2 text-[var(--color-text-secondary)]">
           Build a recovery plan to reduce harmful habits and replace them with healthier actions.
         </p>
       </div>
@@ -165,9 +174,9 @@ export default function RecoveryPage() {
       </div>
 
       {/* Recovery plan */}
-      <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
-        <div className="text-xl font-semibold">{plan?.title}</div>
-        <div className="mt-2 text-white/60">
+      <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+        <div className="text-xl font-semibold text-[var(--color-text-primary)]">{planTitle}</div>
+        <div className="mt-2 text-[var(--color-text-secondary)]">
           Based on your answers, here is your first recovery strategy.
         </div>
 
@@ -177,7 +186,7 @@ export default function RecoveryPage() {
         </div>
 
         <div className="mt-6">
-          <div className="text-sm font-semibold text-white/80">Choose a replacement action</div>
+          <div className="text-sm font-semibold text-[var(--color-text-primary)]">Choose a replacement action</div>
           <div className="mt-3 flex flex-wrap gap-2">
             {replacementOptions.map((r) => (
               <ChoiceButton
@@ -191,15 +200,15 @@ export default function RecoveryPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl bg-black/30 p-5 ring-1 ring-white/10">
-          <div className="text-sm text-white/60">Your recovery plan</div>
-          <div className="mt-3 text-white/80 leading-relaxed">
-            When <span className="font-semibold text-white">{trigger.toLowerCase()}</span> hits during{" "}
-            <span className="font-semibold text-white">{dangerTime.toLowerCase()}</span>, instead of{" "}
-            <span className="font-semibold text-white">
-              {habitOptions.find((h) => h.key === habit)?.label.toLowerCase()}
+        <div className="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5">
+          <div className="text-sm font-semibold text-[var(--color-text-secondary)]">Your recovery plan</div>
+          <div className="mt-3 leading-relaxed text-[var(--color-text-secondary)]">
+            When <span className="font-semibold text-[var(--color-text-primary)]">{trigger.toLowerCase()}</span> hits during{" "}
+            <span className="font-semibold text-[var(--color-text-primary)]">{dangerTime.toLowerCase()}</span>, instead of{" "}
+            <span className="font-semibold text-[var(--color-text-primary)]">
+              {habitLabel.toLowerCase()}
             </span>
-            , do: <span className="font-semibold text-white">{selectedReplacement}</span>.
+            , do: <span className="font-semibold text-[var(--color-text-primary)]">{selectedReplacement}</span>.
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -214,7 +223,7 @@ export default function RecoveryPage() {
             <button
               type="button"
               onClick={handleRelapse}
-              className="rounded-xl bg-red-500/20 px-4 py-3 text-sm font-semibold text-red-100 ring-1 ring-red-300/20 hover:bg-red-500/25"
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-100"
             >
               Log a relapse
             </button>
@@ -225,7 +234,7 @@ export default function RecoveryPage() {
       <UrgeActionModal
         open={urgeOpen}
         onClose={() => setUrgeOpen(false)}
-        habitLabel={habitOptions.find((h) => h.key === habit)?.label || "Bad habit"}
+        habitLabel={habitLabel}
         trigger={trigger}
         dangerTime={dangerTime}
         replacement={selectedReplacement}
@@ -237,8 +246,8 @@ export default function RecoveryPage() {
 
 function QuestionCard({ title, children }) {
   return (
-    <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-      <div className="text-sm font-semibold text-white/80">{title}</div>
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <div className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</div>
       <div className="mt-4">{children}</div>
     </div>
   );
@@ -250,10 +259,10 @@ function ChoiceButton({ children, active, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "rounded-xl px-4 py-2 text-sm ring-1 transition",
+        "rounded-xl px-4 py-2 text-sm font-semibold ring-1 transition focus:outline-none focus:ring-4 focus:ring-[#3337a6]/10",
         active
-          ? "bg-white text-black ring-white/20"
-          : "bg-white/10 text-white ring-white/15 hover:bg-white/15",
+          ? "bg-[var(--color-accent)] text-white ring-[var(--color-accent)]"
+          : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] ring-[var(--color-border)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text-primary)]",
       ].join(" ")}
     >
       {children}
@@ -263,18 +272,18 @@ function ChoiceButton({ children, active, onClick }) {
 
 function PlanBox({ title, value }) {
   return (
-    <div className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/10">
-      <div className="text-sm text-white/60">{title}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-4">
+      <div className="text-sm text-[var(--color-text-muted)]">{title}</div>
+      <div className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">{value}</div>
     </div>
   );
 }
 
 function StatBox({ title, value }) {
   return (
-    <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-      <div className="text-sm text-white/60">{title}</div>
-      <div className="mt-2 text-3xl font-semibold">{value}</div>
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <div className="text-sm text-[var(--color-text-muted)]">{title}</div>
+      <div className="mt-2 text-3xl font-semibold text-[var(--color-text-primary)]">{value}</div>
     </div>
   );
 }

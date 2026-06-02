@@ -16,6 +16,6 @@ export async function dismissNotification(id) {
 }
 
 export async function fetchPendingNotificationsCount() {
-  const data = await fetchPendingNotifications();
-  return Array.isArray(data) ? data.length : 0;
+  const res = await api.get("/notifications/unread-count");
+  return res.data?.count ?? 0;
 }

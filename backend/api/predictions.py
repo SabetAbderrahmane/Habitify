@@ -62,8 +62,21 @@ class PredictionOut(BaseModel):
     risk_level: str
     source: str                      # "ml" or "rule_based_fallback"
     confidence: Optional[float] = None
+    confidence_type: Optional[str] = None
+    model_name: Optional[str] = None
+    recommendation: Optional[str] = None
     factors: List[str]
     predicted_at: str
+
+
+class ModelInfoOut(BaseModel):
+    model_name: str
+    framework: str
+    model_file_exists: bool
+    tabular_feature_count: int
+    sequence_length: int
+    model_output_meaning: str
+    risk_formula: str
 
 
 @router.get("/predictions/lapse-risk", response_model=List[PredictionOut])
@@ -144,6 +157,9 @@ async def get_lapse_risk_predictions(current_user=Depends(get_current_user)):
                 risk_level=risk_level,
                 source=source,
                 confidence=round(confidence, 4) if confidence is not None else None,
+                confidence_type="model_probability_margin" if confidence is not None else None,
+                model_name="Hybrid LSTM-Tabular Habit Predictor",
+                recommendation=_recommendation_for_risk(risk_level, factors),
                 factors=factors,
                 predicted_at=datetime.now().isoformat(),
             ))
@@ -160,6 +176,26 @@ async def get_lapse_risk_predictions(current_user=Depends(get_current_user)):
         return predictions
     finally:
         conn.close()
+
+
+@router.get("/predictions/model-info", response_model=ModelInfoOut)
+async def get_prediction_model_info(current_user=Depends(get_current_user)):
+    return ModelInfoOut(
+        model_name="Hybrid LSTM-Tabular Habit Predictor",
+        framework="PyTorch",
+        model_file_exists=MODEL_PATH.exists(),
+        tabular_feature_count=MODEL_PARAMS["tabular_input_size"],
+        sequence_length=14,
+        model_output_meaning=(
+            "Model output is estimated completion probability for the habit; "
+            "higher output means lower lapse risk."
+        ),
+        risk_formula=(
+            "lapse_risk_score = 1 - model_completion_probability when the "
+            "PyTorch model loads; otherwise a deterministic fallback combines "
+            "14-day miss rate, recent progress, mood, energy, urges, and weekend effect."
+        ),
+    )
 
 
 def _rule_based_risk(features) -> float:
@@ -248,3 +284,13 @@ def identify_risk_factors(features):
     if not factors:
         factors.append("Consistent baseline performance")
     return factors[:3]
+
+
+def _recommendation_for_risk(risk_level: str, factors: List[str]) -> str:
+    if risk_level == "High":
+        return "Pick the smallest version of this habit today and log it before the day gets busy."
+    if risk_level == "Medium":
+        return "Use your strongest time window and reduce the habit scope if needed."
+    if factors and factors[0] != "Consistent baseline performance":
+        return "Watch the leading risk factor and keep today's session simple."
+    return "Keep the routine steady with one normal completion today."

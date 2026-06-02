@@ -32,6 +32,11 @@ class HabitCreate(BaseModel):
     category: HabitCategory = HabitCategory.OTHER
     target: str = "Daily"
     frequency: HabitFrequency = HabitFrequency.DAILY
+    description: str = ""
+    reminder_time: str = ""
+    preferred_time_window: str = ""
+    goal_value: int = Field(1, ge=1)
+    goal_unit: str = "session"
 
 
 class HabitUpdate(BaseModel):
@@ -40,6 +45,11 @@ class HabitUpdate(BaseModel):
     target: Optional[str] = None
     frequency: Optional[str] = None
     archived: Optional[bool] = None
+    description: Optional[str] = None
+    reminder_time: Optional[str] = None
+    preferred_time_window: Optional[str] = None
+    goal_value: Optional[int] = Field(None, ge=1)
+    goal_unit: Optional[str] = None
 
 
 class HabitOut(BaseModel):
@@ -51,6 +61,11 @@ class HabitOut(BaseModel):
     frequency: str
     archived: bool
     created_at: str
+    description: str = ""
+    reminder_time: str = ""
+    preferred_time_window: str = ""
+    goal_value: int = 1
+    goal_unit: str = "session"
 
 
 # --- Habit Log Models ---
@@ -59,10 +74,14 @@ class HabitLogCreate(BaseModel):
     habit_id: str
     progress: int = Field(..., ge=0, le=100)
     date: date
+    note: str = ""
+    completed_at: str = ""
 
 
 class HabitLogUpdate(BaseModel):
-    progress: int = Field(..., ge=0, le=100)
+    progress: Optional[int] = Field(None, ge=0, le=100)
+    note: Optional[str] = None
+    completed_at: Optional[str] = None
 
 
 class HabitLogOut(BaseModel):
@@ -72,6 +91,43 @@ class HabitLogOut(BaseModel):
     progress: int
     date: str
     name: Optional[str] = None # Helper for frontend
+    note: str = ""
+    completed_at: str = ""
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+def habit_out(row) -> HabitOut:
+    return HabitOut(
+        id=row["id"],
+        user_id=row["user_id"],
+        name=row["name"],
+        category=row["category"],
+        target=row["target"],
+        frequency=row["frequency"],
+        archived=bool(row["archived"]),
+        created_at=row["created_at"],
+        description=row["description"] or "",
+        reminder_time=row["reminder_time"] or "",
+        preferred_time_window=row["preferred_time_window"] or "",
+        goal_value=row["goal_value"] or 1,
+        goal_unit=row["goal_unit"] or "session",
+    )
+
+
+def habit_log_out(row) -> HabitLogOut:
+    return HabitLogOut(
+        id=row["id"],
+        habit_id=row["habit_id"],
+        user_id=row["user_id"],
+        progress=row["progress"],
+        date=row["date"],
+        name=row["name"],
+        note=row["note"] or "",
+        completed_at=row["completed_at"] or "",
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )
 
 
 # --- Habit Definition Routes ---
@@ -91,19 +147,7 @@ async def get_habit_definitions(
     rows = conn.execute(query, params).fetchall()
     conn.close()
 
-    return [
-        HabitOut(
-            id=row["id"],
-            user_id=row["user_id"],
-            name=row["name"],
-            category=row["category"],
-            target=row["target"],
-            frequency=row["frequency"],
-            archived=bool(row["archived"]),
-            created_at=row["created_at"]
-        )
-        for row in rows
-    ]
+    return [habit_out(row) for row in rows]
 
 
 @router.post("/habits/", response_model=HabitOut)
@@ -123,26 +167,32 @@ async def create_habit_definition(habit: HabitCreate, current_user=Depends(get_c
     habit_id = str(uuid4())
     conn.execute(
         """
-        INSERT INTO habits (id, user_id, name, category, target, frequency)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO habits (
+            id, user_id, name, category, target, frequency, description,
+            reminder_time, preferred_time_window, goal_value, goal_unit
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (habit_id, current_user["id"], habit.name, habit.category, habit.target, habit.frequency)
+        (
+            habit_id,
+            current_user["id"],
+            habit.name,
+            habit.category,
+            habit.target,
+            habit.frequency,
+            habit.description,
+            habit.reminder_time,
+            habit.preferred_time_window,
+            habit.goal_value,
+            habit.goal_unit,
+        )
     )
     conn.commit()
     
     row = conn.execute("SELECT * FROM habits WHERE id = ?", (habit_id,)).fetchone()
     conn.close()
 
-    return HabitOut(
-        id=row["id"],
-        user_id=row["user_id"],
-        name=row["name"],
-        category=row["category"],
-        target=row["target"],
-        frequency=row["frequency"],
-        archived=bool(row["archived"]),
-        created_at=row["created_at"]
-    )
+    return habit_out(row)
 
 
 @router.patch("/habits/{habit_id}", response_model=HabitOut)
@@ -162,30 +212,44 @@ async def update_habit_definition(habit_id: str, patch: HabitUpdate, current_use
     new_target = patch.target if patch.target is not None else row["target"]
     new_frequency = patch.frequency if patch.frequency is not None else row["frequency"]
     new_archived = int(patch.archived) if patch.archived is not None else row["archived"]
+    new_description = patch.description if patch.description is not None else row["description"]
+    new_reminder_time = patch.reminder_time if patch.reminder_time is not None else row["reminder_time"]
+    new_preferred_time_window = (
+        patch.preferred_time_window
+        if patch.preferred_time_window is not None
+        else row["preferred_time_window"]
+    )
+    new_goal_value = patch.goal_value if patch.goal_value is not None else row["goal_value"]
+    new_goal_unit = patch.goal_unit if patch.goal_unit is not None else row["goal_unit"]
 
     conn.execute(
         """
         UPDATE habits
-        SET name = ?, category = ?, target = ?, frequency = ?, archived = ?
+        SET name = ?, category = ?, target = ?, frequency = ?, archived = ?,
+            description = ?, reminder_time = ?, preferred_time_window = ?,
+            goal_value = ?, goal_unit = ?
         WHERE id = ?
         """,
-        (new_name, new_category, new_target, new_frequency, new_archived, habit_id)
+        (
+            new_name,
+            new_category,
+            new_target,
+            new_frequency,
+            new_archived,
+            new_description,
+            new_reminder_time,
+            new_preferred_time_window,
+            new_goal_value,
+            new_goal_unit,
+            habit_id,
+        )
     )
     conn.commit()
     
     updated = conn.execute("SELECT * FROM habits WHERE id = ?", (habit_id,)).fetchone()
     conn.close()
 
-    return HabitOut(
-        id=updated["id"],
-        user_id=updated["user_id"],
-        name=updated["name"],
-        category=updated["category"],
-        target=updated["target"],
-        frequency=updated["frequency"],
-        archived=bool(updated["archived"]),
-        created_at=updated["created_at"]
-    )
+    return habit_out(updated)
 
 
 @router.delete("/habits/{habit_id}")
@@ -237,17 +301,7 @@ async def get_habit_logs(
     rows = conn.execute(query, params).fetchall()
     conn.close()
 
-    return [
-        HabitLogOut(
-            id=row["id"],
-            habit_id=row["habit_id"],
-            user_id=row["user_id"],
-            progress=row["progress"],
-            date=row["date"],
-            name=row["name"]
-        )
-        for row in rows
-    ]
+    return [habit_log_out(row) for row in rows]
 
 
 @router.post("/habits/logs", response_model=HabitLogOut)
@@ -274,18 +328,32 @@ async def log_habit_progress(log: HabitLogCreate, current_user=Depends(get_curre
     
     if existing:
         conn.execute(
-            "UPDATE habit_logs SET progress = ? WHERE id = ?",
-            (log.progress, existing["id"])
+            """
+            UPDATE habit_logs
+            SET progress = ?, note = ?, completed_at = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (log.progress, log.note, log.completed_at, existing["id"])
         )
         log_id = existing["id"]
     else:
         log_id = str(uuid4())
         conn.execute(
             """
-            INSERT INTO habit_logs (id, habit_id, user_id, progress, date)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO habit_logs (
+                id, habit_id, user_id, progress, date, note, completed_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """,
-            (log_id, log.habit_id, current_user["id"], log.progress, date_str)
+            (
+                log_id,
+                log.habit_id,
+                current_user["id"],
+                log.progress,
+                date_str,
+                log.note,
+                log.completed_at,
+            )
         )
     
     conn.commit()
@@ -296,14 +364,52 @@ async def log_habit_progress(log: HabitLogCreate, current_user=Depends(get_curre
     ).fetchone()
     conn.close()
 
-    return HabitLogOut(
-        id=row["id"],
-        habit_id=row["habit_id"],
-        user_id=row["user_id"],
-        progress=row["progress"],
-        date=row["date"],
-        name=row["name"]
+    return habit_log_out(row)
+
+
+@router.patch("/habits/logs/{log_id}", response_model=HabitLogOut)
+async def update_habit_log(log_id: str, patch: HabitLogUpdate, current_user=Depends(get_current_user)):
+    conn = get_connection()
+    row = conn.execute(
+        """
+        SELECT hl.*, h.name
+        FROM habit_logs hl
+        JOIN habits h ON hl.habit_id = h.id
+        WHERE hl.id = ? AND hl.user_id = ?
+        """,
+        (log_id, current_user["id"]),
+    ).fetchone()
+
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Log not found")
+
+    new_progress = patch.progress if patch.progress is not None else row["progress"]
+    new_note = patch.note if patch.note is not None else row["note"]
+    new_completed_at = patch.completed_at if patch.completed_at is not None else row["completed_at"]
+
+    conn.execute(
+        """
+        UPDATE habit_logs
+        SET progress = ?, note = ?, completed_at = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+        """,
+        (new_progress, new_note, new_completed_at, log_id, current_user["id"]),
     )
+    conn.commit()
+
+    updated = conn.execute(
+        """
+        SELECT hl.*, h.name
+        FROM habit_logs hl
+        JOIN habits h ON hl.habit_id = h.id
+        WHERE hl.id = ?
+        """,
+        (log_id,),
+    ).fetchone()
+    conn.close()
+
+    return habit_log_out(updated)
 
 
 @router.delete("/habits/logs/{log_id}")

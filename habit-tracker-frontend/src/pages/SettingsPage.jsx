@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { downloadUserExport } from "../lib/export";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import PageHeader from "../components/ui/PageHeader";
 
 export default function SettingsPage() {
   const [busy, setBusy] = useState(false);
@@ -23,53 +26,51 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Settings</h1>
-        <p className="mt-2 text-white/60">
-          Manage local account tools and export your data for backup or model retraining.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Settings"
+        title="Account tools"
+        description="Manage local account tools and export your data for backup or model retraining."
+      />
 
-      <section className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
+      <Card>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Export your data</h2>
-            <p className="mt-2 max-w-2xl text-sm text-white/60">
+            <h2 className="text-xl font-semibold text-slate-950">Export your data</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               Download a JSON file containing your profile, habit logs, check-ins, recovery events,
               nudges, and notifications.
             </p>
           </div>
 
-          <button
+          <Button
             onClick={handleExport}
             disabled={busy}
-            className="rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-5 py-3 text-sm font-semibold text-black disabled:opacity-60"
           >
             {busy ? "Exporting..." : "Download export"}
-          </button>
+          </Button>
         </div>
 
         {status ? (
-          <div className="mt-4 rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-200 ring-1 ring-emerald-300/20">
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
             {status}
           </div>
         ) : null}
 
         {error ? (
-          <div className="mt-4 rounded-2xl bg-red-500/10 p-4 text-sm text-red-200 ring-1 ring-red-300/20">
+          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
         ) : null}
-      </section>
+      </Card>
 
-      <section className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
-        <h2 className="text-xl font-semibold">Roadmap</h2>
-        <div className="mt-3 space-y-2 text-sm text-white/65">
-          <p>• Import and merge exported datasets for retraining</p>
-          <p>• Connect the predictor to dashboard and recommendations</p>
-          <p>• Add LLM chat guidance on top of habits and recovery</p>
+      <Card>
+        <h2 className="text-xl font-semibold text-slate-950">Roadmap</h2>
+        <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+          <p>Import and merge exported datasets for retraining.</p>
+          <p>Connect richer predictor explanations to dashboard and recommendations.</p>
+          <p>Add chat guidance on top of habits and recovery when backend support exists.</p>
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

@@ -72,6 +72,10 @@ class CheckinIn(BaseModel):
     difficult: str = ""
     note: str = ""
     completed: bool = True
+    sleep_hours: Optional[float] = Field(None, ge=0, le=24)
+    sleep_quality: str = ""
+    weather_condition: str = ""
+    temperature_c: Optional[float] = None
 
 
 class CheckinOut(BaseModel):
@@ -82,6 +86,10 @@ class CheckinOut(BaseModel):
     difficult: str = ""
     note: str = ""
     completed: bool = False
+    sleep_hours: Optional[float] = None
+    sleep_quality: str = ""
+    weather_condition: str = ""
+    temperature_c: Optional[float] = None
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +101,8 @@ async def get_checkin(date: str, current_user=Depends(get_current_user)):
     conn = get_connection()
     row = conn.execute(
         """
-        SELECT date, mood, energy, had_urges, difficult, note, completed
+        SELECT date, mood, energy, had_urges, difficult, note, completed,
+               sleep_hours, sleep_quality, weather_condition, temperature_c
         FROM daily_checkins
         WHERE user_id = ? AND date = ?
         """,
@@ -112,6 +121,10 @@ async def get_checkin(date: str, current_user=Depends(get_current_user)):
         difficult=row["difficult"] or "",
         note=row["note"] or "",
         completed=bool(row["completed"]),
+        sleep_hours=row["sleep_hours"],
+        sleep_quality=row["sleep_quality"] or "",
+        weather_condition=row["weather_condition"] or "",
+        temperature_c=row["temperature_c"],
     )
 
 
@@ -132,7 +145,9 @@ async def save_checkin(payload: CheckinIn, current_user=Depends(get_current_user
         conn.execute(
             """
             UPDATE daily_checkins
-            SET mood = ?, energy = ?, had_urges = ?, difficult = ?, note = ?, completed = ?, updated_at = CURRENT_TIMESTAMP
+            SET mood = ?, energy = ?, had_urges = ?, difficult = ?, note = ?,
+                completed = ?, sleep_hours = ?, sleep_quality = ?,
+                weather_condition = ?, temperature_c = ?, updated_at = CURRENT_TIMESTAMP
             WHERE user_id = ? AND date = ?
             """,
             (
@@ -142,6 +157,10 @@ async def save_checkin(payload: CheckinIn, current_user=Depends(get_current_user
                 payload.difficult,
                 payload.note,
                 1 if payload.completed else 0,
+                payload.sleep_hours,
+                payload.sleep_quality,
+                payload.weather_condition,
+                payload.temperature_c,
                 current_user["id"],
                 payload.date,
             ),
@@ -149,8 +168,11 @@ async def save_checkin(payload: CheckinIn, current_user=Depends(get_current_user
     else:
         conn.execute(
             """
-            INSERT INTO daily_checkins (user_id, date, mood, energy, had_urges, difficult, note, completed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO daily_checkins (
+                user_id, date, mood, energy, had_urges, difficult, note, completed,
+                sleep_hours, sleep_quality, weather_condition, temperature_c
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 current_user["id"],
@@ -161,6 +183,10 @@ async def save_checkin(payload: CheckinIn, current_user=Depends(get_current_user
                 payload.difficult,
                 payload.note,
                 1 if payload.completed else 0,
+                payload.sleep_hours,
+                payload.sleep_quality,
+                payload.weather_condition,
+                payload.temperature_c,
             ),
         )
 
@@ -168,7 +194,8 @@ async def save_checkin(payload: CheckinIn, current_user=Depends(get_current_user
 
     row = conn.execute(
         """
-        SELECT date, mood, energy, had_urges, difficult, note, completed
+        SELECT date, mood, energy, had_urges, difficult, note, completed,
+               sleep_hours, sleep_quality, weather_condition, temperature_c
         FROM daily_checkins
         WHERE user_id = ? AND date = ?
         """,
@@ -184,4 +211,8 @@ async def save_checkin(payload: CheckinIn, current_user=Depends(get_current_user
         difficult=row["difficult"] or "",
         note=row["note"] or "",
         completed=bool(row["completed"]),
+        sleep_hours=row["sleep_hours"],
+        sleep_quality=row["sleep_quality"] or "",
+        weather_condition=row["weather_condition"] or "",
+        temperature_c=row["temperature_c"],
     )

@@ -1,0 +1,4 @@
+pytest>=8.2.0
+httpx>=0.27.0
+requests>=2.32.0
+matplotlib>=3.8.0

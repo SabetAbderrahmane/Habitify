@@ -1,0 +1,230 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/components/EditHabitModal.jsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=3ef80c3a"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+var _s = $RefreshSig$();
+import __vite__cjsImport1_react from "/node_modules/.vite/deps/react.js?v=3ef80c3a"; const useMemo = __vite__cjsImport1_react["useMemo"]; const useState = __vite__cjsImport1_react["useState"];
+export default function EditHabitModal({ open, onClose, habit, onSave, onDelete }) {
+  _s();
+  const [name, setName] = useState(habit?.name || "");
+  const [progress, setProgress] = useState(habit?.progress ?? 0);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const canSubmit = useMemo(() => name.trim().length >= 2 && !busy, [name, busy]);
+  if (!open) return null;
+  const save = async (e) => {
+    e.preventDefault();
+    setErr("");
+    setBusy(true);
+    try {
+      await onSave?.({ name: name.trim(), progress: Number(progress) });
+      onClose?.();
+    } catch (error) {
+      setErr(error?.message || "Failed to save");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const del = async () => {
+    setErr("");
+    setBusy(true);
+    try {
+      await onDelete?.();
+      onClose?.();
+    } catch (error) {
+      setErr(error?.message || "Failed to delete");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return /* @__PURE__ */ jsxDEV("div", { className: "fixed inset-0 z-50 grid place-items-center bg-black/60 p-4", children: /* @__PURE__ */ jsxDEV("div", { className: "w-full max-w-lg rounded-3xl bg-[#0b0d14]/90 p-1 ring-1 ring-white/15 backdrop-blur-xl", children: /* @__PURE__ */ jsxDEV("div", { className: "rounded-[22px] bg-white/5 p-6 ring-1 ring-white/10", children: [
+    /* @__PURE__ */ jsxDEV("div", { className: "flex items-start justify-between gap-4", children: [
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("h2", { className: "text-xl font-semibold", children: "Edit habit" }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+          lineNumber: 46,
+          columnNumber: 15
+        }, this),
+        /* @__PURE__ */ jsxDEV("p", { className: "mt-1 text-sm text-white/55", children: habit?.date }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+          lineNumber: 47,
+          columnNumber: 15
+        }, this)
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+        lineNumber: 45,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(
+        "button",
+        {
+          onClick: onClose,
+          className: "rounded-xl bg-white/10 px-3 py-1 text-sm ring-1 ring-white/15 hover:bg-white/15",
+          type: "button",
+          children: "Close"
+        },
+        void 0,
+        false,
+        {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+          lineNumber: 50,
+          columnNumber: 13
+        },
+        this
+      )
+    ] }, void 0, true, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+      lineNumber: 44,
+      columnNumber: 11
+    }, this),
+    /* @__PURE__ */ jsxDEV("form", { onSubmit: save, className: "mt-6 space-y-4", children: [
+      /* @__PURE__ */ jsxDEV("div", { className: "space-y-2", children: [
+        /* @__PURE__ */ jsxDEV("label", { className: "text-xs text-white/60", children: "Habit name" }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+          lineNumber: 61,
+          columnNumber: 15
+        }, this),
+        /* @__PURE__ */ jsxDEV(
+          "input",
+          {
+            className: "w-full rounded-2xl bg-white/5 px-4 py-3 text-sm outline-none ring-1 ring-white/10 placeholder:text-white/30 focus:ring-cyan-300/35",
+            value: name,
+            onChange: (e) => setName(e.target.value),
+            minLength: 2,
+            required: true
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+            lineNumber: 62,
+            columnNumber: 15
+          },
+          this
+        )
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+        lineNumber: 60,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { className: "space-y-2", children: [
+        /* @__PURE__ */ jsxDEV("label", { className: "text-xs text-white/60", children: "Progress (%)" }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+          lineNumber: 72,
+          columnNumber: 15
+        }, this),
+        /* @__PURE__ */ jsxDEV(
+          "input",
+          {
+            className: "w-full rounded-2xl bg-white/5 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-fuchsia-300/35",
+            type: "number",
+            min: 0,
+            max: 100,
+            value: progress,
+            onChange: (e) => setProgress(e.target.value)
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+            lineNumber: 73,
+            columnNumber: 15
+          },
+          this
+        )
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+        lineNumber: 71,
+        columnNumber: 13
+      }, this),
+      err ? /* @__PURE__ */ jsxDEV("div", { className: "rounded-2xl bg-red-500/10 p-3 text-sm text-red-200 ring-1 ring-red-300/20", children: err }, void 0, false, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+        lineNumber: 84,
+        columnNumber: 13
+      }, this) : null,
+      /* @__PURE__ */ jsxDEV("div", { className: "grid gap-3 md:grid-cols-2", children: [
+        /* @__PURE__ */ jsxDEV(
+          "button",
+          {
+            disabled: !canSubmit,
+            className: "rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-black disabled:opacity-60",
+            type: "submit",
+            children: busy ? "Saving..." : "Save changes"
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+            lineNumber: 90,
+            columnNumber: 15
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          "button",
+          {
+            disabled: busy,
+            onClick: del,
+            className: "rounded-2xl bg-red-500/20 px-4 py-3 text-sm font-semibold text-red-100 ring-1 ring-red-300/20 hover:bg-red-500/25",
+            type: "button",
+            children: "Delete"
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+            lineNumber: 98,
+            columnNumber: 15
+          },
+          this
+        )
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+        lineNumber: 89,
+        columnNumber: 13
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+      lineNumber: 59,
+      columnNumber: 11
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+    lineNumber: 43,
+    columnNumber: 9
+  }, this) }, void 0, false, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+    lineNumber: 42,
+    columnNumber: 7
+  }, this) }, void 0, false, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx",
+    lineNumber: 41,
+    columnNumber: 5
+  }, this);
+}
+_s(EditHabitModal, "Aj5c8LXntmbM3T58QPoSFL9UUGg=");
+_c = EditHabitModal;
+var _c;
+$RefreshReg$(_c, "EditHabitModal");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) {
+  return RefreshRuntime.register(type, "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/EditHabitModal.jsx " + id);
+}
+function $RefreshSig$() {
+  return RefreshRuntime.createSignatureFunctionForTransform();
+}
+
+//# sourceMappingURL=data:application/json;base64,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O0FBQUNsQixHQTdHdUJOLGdCQUFjO0FBQUEsS0FBZEE7QUFBYyxJQUFBNEI7QUFBQSxhQUFBQSxJQUFBIiwibmFtZXMiOlsidXNlTWVtbyIsInVzZVN0YXRlIiwiRWRpdEhhYml0TW9kYWwiLCJvcGVuIiwib25DbG9zZSIsImhhYml0Iiwib25TYXZlIiwib25EZWxldGUiLCJfcyIsIm5hbWUiLCJzZXROYW1lIiwicHJvZ3Jlc3MiLCJzZXRQcm9ncmVzcyIsImJ1c3kiLCJzZXRCdXN5IiwiZXJyIiwic2V0RXJyIiwiY2FuU3VibWl0IiwidHJpbSIsImxlbmd0aCIsInNhdmUiLCJlIiwicHJldmVudERlZmF1bHQiLCJOdW1iZXIiLCJlcnJvciIsIm1lc3NhZ2UiLCJkZWwiLCJkYXRlIiwidGFyZ2V0IiwidmFsdWUiLCJfYyJdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJFZGl0SGFiaXRNb2RhbC5qc3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgdXNlTWVtbywgdXNlU3RhdGUgfSBmcm9tIFwicmVhY3RcIjtcclxuXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIEVkaXRIYWJpdE1vZGFsKHsgb3Blbiwgb25DbG9zZSwgaGFiaXQsIG9uU2F2ZSwgb25EZWxldGUgfSkge1xyXG4gIGNvbnN0IFtuYW1lLCBzZXROYW1lXSA9IHVzZVN0YXRlKGhhYml0Py5uYW1lIHx8IFwiXCIpO1xyXG4gIGNvbnN0IFtwcm9ncmVzcywgc2V0UHJvZ3Jlc3NdID0gdXNlU3RhdGUoaGFiaXQ/LnByb2dyZXNzID8/IDApO1xyXG4gIGNvbnN0IFtidXN5LCBzZXRCdXN5XSA9IHVzZVN0YXRlKGZhbHNlKTtcclxuICBjb25zdCBbZXJyLCBzZXRFcnJdID0gdXNlU3RhdGUoXCJcIik7XHJcblxyXG4gIGNvbnN0IGNhblN1Ym1pdCA9IHVzZU1lbW8oKCkgPT4gbmFtZS50cmltKCkubGVuZ3RoID49IDIgJiYgIWJ1c3ksIFtuYW1lLCBidXN5XSk7XHJcblxyXG4gIGlmICghb3BlbikgcmV0dXJuIG51bGw7XHJcblxyXG4gIGNvbnN0IHNhdmUgPSBhc3luYyAoZSkgPT4ge1xyXG4gICAgZS5wcmV2ZW50RGVmYXVsdCgpO1xyXG4gICAgc2V0RXJyKFwiXCIpO1xyXG4gICAgc2V0QnVzeSh0cnVlKTtcclxuICAgIHRyeSB7XHJcbiAgICAgIGF3YWl0IG9uU2F2ZT8uKHsgbmFtZTogbmFtZS50cmltKCksIHByb2dyZXNzOiBOdW1iZXIocHJvZ3Jlc3MpIH0pO1xyXG4gICAgICBvbkNsb3NlPy4oKTtcclxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XHJcbiAgICAgIHNldEVycihlcnJvcj8ubWVzc2FnZSB8fCBcIkZhaWxlZCB0byBzYXZlXCIpO1xyXG4gICAgfSBmaW5hbGx5IHtcclxuICAgICAgc2V0QnVzeShmYWxzZSk7XHJcbiAgICB9XHJcbiAgfTtcclxuXHJcbiAgY29uc3QgZGVsID0gYXN5bmMgKCkgPT4ge1xyXG4gICAgc2V0RXJyKFwiXCIpO1xyXG4gICAgc2V0QnVzeSh0cnVlKTtcclxuICAgIHRyeSB7XHJcbiAgICAgIGF3YWl0IG9uRGVsZXRlPy4oKTtcclxuICAgICAgb25DbG9zZT8uKCk7XHJcbiAgICB9IGNhdGNoIChlcnJvcikge1xyXG4gICAgICBzZXRFcnIoZXJyb3I/Lm1lc3NhZ2UgfHwgXCJGYWlsZWQgdG8gZGVsZXRlXCIpO1xyXG4gICAgfSBmaW5hbGx5IHtcclxuICAgICAgc2V0QnVzeShmYWxzZSk7XHJcbiAgICB9XHJcbiAgfTtcclxuXHJcbiAgcmV0dXJuIChcclxuICAgIDxkaXYgY2xhc3NOYW1lPVwiZml4ZWQgaW5zZXQtMCB6LTUwIGdyaWQgcGxhY2UtaXRlbXMtY2VudGVyIGJnLWJsYWNrLzYwIHAtNFwiPlxyXG4gICAgICA8ZGl2IGNsYXNzTmFtZT1cInctZnVsbCBtYXgtdy1sZyByb3VuZGVkLTN4bCBiZy1bIzBiMGQxNF0vOTAgcC0xIHJpbmctMSByaW5nLXdoaXRlLzE1IGJhY2tkcm9wLWJsdXIteGxcIj5cclxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cInJvdW5kZWQtWzIycHhdIGJnLXdoaXRlLzUgcC02IHJpbmctMSByaW5nLXdoaXRlLzEwXCI+XHJcbiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImZsZXggaXRlbXMtc3RhcnQganVzdGlmeS1iZXR3ZWVuIGdhcC00XCI+XHJcbiAgICAgICAgICAgIDxkaXY+XHJcbiAgICAgICAgICAgICAgPGgyIGNsYXNzTmFtZT1cInRleHQteGwgZm9udC1zZW1pYm9sZFwiPkVkaXQgaGFiaXQ8L2gyPlxyXG4gICAgICAgICAgICAgIDxwIGNsYXNzTmFtZT1cIm10LTEgdGV4dC1zbSB0ZXh0LXdoaXRlLzU1XCI+e2hhYml0Py5kYXRlfTwvcD5cclxuICAgICAgICAgICAgPC9kaXY+XHJcblxyXG4gICAgICAgICAgICA8YnV0dG9uXHJcbiAgICAgICAgICAgICAgb25DbGljaz17b25DbG9zZX1cclxuICAgICAgICAgICAgICBjbGFzc05hbWU9XCJyb3VuZGVkLXhsIGJnLXdoaXRlLzEwIHB4LTMgcHktMSB0ZXh0LXNtIHJpbmctMSByaW5nLXdoaXRlLzE1IGhvdmVyOmJnLXdoaXRlLzE1XCJcclxuICAgICAgICAgICAgICB0eXBlPVwiYnV0dG9uXCJcclxuICAgICAgICAgICAgPlxyXG4gICAgICAgICAgICAgIENsb3NlXHJcbiAgICAgICAgICAgIDwvYnV0dG9uPlxyXG4gICAgICAgICAgPC9kaXY+XHJcblxyXG4gICAgICAgICAgPGZvcm0gb25TdWJtaXQ9e3NhdmV9IGNsYXNzTmFtZT1cIm10LTYgc3BhY2UteS00XCI+XHJcbiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwic3BhY2UteS0yXCI+XHJcbiAgICAgICAgICAgICAgPGxhYmVsIGNsYXNzTmFtZT1cInRleHQteHMgdGV4dC13aGl0ZS82MFwiPkhhYml0IG5hbWU8L2xhYmVsPlxyXG4gICAgICAgICAgICAgIDxpbnB1dFxyXG4gICAgICAgICAgICAgICAgY2xhc3NOYW1lPVwidy1mdWxsIHJvdW5kZWQtMnhsIGJnLXdoaXRlLzUgcHgtNCBweS0zIHRleHQtc20gb3V0bGluZS1ub25lIHJpbmctMSByaW5nLXdoaXRlLzEwIHBsYWNlaG9sZGVyOnRleHQtd2hpdGUvMzAgZm9jdXM6cmluZy1jeWFuLTMwMC8zNVwiXHJcbiAgICAgICAgICAgICAgICB2YWx1ZT17bmFtZX1cclxuICAgICAgICAgICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gc2V0TmFtZShlLnRhcmdldC52YWx1ZSl9XHJcbiAgICAgICAgICAgICAgICBtaW5MZW5ndGg9ezJ9XHJcbiAgICAgICAgICAgICAgICByZXF1aXJlZFxyXG4gICAgICAgICAgICAgIC8+XHJcbiAgICAgICAgICAgIDwvZGl2PlxyXG5cclxuICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJzcGFjZS15LTJcIj5cclxuICAgICAgICAgICAgICA8bGFiZWwgY2xhc3NOYW1lPVwidGV4dC14cyB0ZXh0LXdoaXRlLzYwXCI+UHJvZ3Jlc3MgKCUpPC9sYWJlbD5cclxuICAgICAgICAgICAgICA8aW5wdXRcclxuICAgICAgICAgICAgICAgIGNsYXNzTmFtZT1cInctZnVsbCByb3VuZGVkLTJ4bCBiZy13aGl0ZS81IHB4LTQgcHktMyB0ZXh0LXNtIG91dGxpbmUtbm9uZSByaW5nLTEgcmluZy13aGl0ZS8xMCBmb2N1czpyaW5nLWZ1Y2hzaWEtMzAwLzM1XCJcclxuICAgICAgICAgICAgICAgIHR5cGU9XCJudW1iZXJcIlxyXG4gICAgICAgICAgICAgICAgbWluPXswfVxyXG4gICAgICAgICAgICAgICAgbWF4PXsxMDB9XHJcbiAgICAgICAgICAgICAgICB2YWx1ZT17cHJvZ3Jlc3N9XHJcbiAgICAgICAgICAgICAgICBvbkNoYW5nZT17KGUpID0+IHNldFByb2dyZXNzKGUudGFyZ2V0LnZhbHVlKX1cclxuICAgICAgICAgICAgICAvPlxyXG4gICAgICAgICAgICA8L2Rpdj5cclxuXHJcbiAgICAgICAgICAgIHtlcnIgPyAoXHJcbiAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJyb3VuZGVkLTJ4bCBiZy1yZWQtNTAwLzEwIHAtMyB0ZXh0LXNtIHRleHQtcmVkLTIwMCByaW5nLTEgcmluZy1yZWQtMzAwLzIwXCI+XHJcbiAgICAgICAgICAgICAgICB7ZXJyfVxyXG4gICAgICAgICAgICAgIDwvZGl2PlxyXG4gICAgICAgICAgICApIDogbnVsbH1cclxuXHJcbiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZ3JpZCBnYXAtMyBtZDpncmlkLWNvbHMtMlwiPlxyXG4gICAgICAgICAgICAgIDxidXR0b25cclxuICAgICAgICAgICAgICAgIGRpc2FibGVkPXshY2FuU3VibWl0fVxyXG4gICAgICAgICAgICAgICAgY2xhc3NOYW1lPVwicm91bmRlZC0yeGwgYmctZ3JhZGllbnQtdG8tciBmcm9tLWN5YW4tNDAwIHZpYS1mdWNoc2lhLTQwMCB0by1pbmRpZ28tNDAwIHB4LTQgcHktMyB0ZXh0LXNtIGZvbnQtc2VtaWJvbGQgdGV4dC1ibGFjayBkaXNhYmxlZDpvcGFjaXR5LTYwXCJcclxuICAgICAgICAgICAgICAgIHR5cGU9XCJzdWJtaXRcIlxyXG4gICAgICAgICAgICAgID5cclxuICAgICAgICAgICAgICAgIHtidXN5ID8gXCJTYXZpbmcuLi5cIiA6IFwiU2F2ZSBjaGFuZ2VzXCJ9XHJcbiAgICAgICAgICAgICAgPC9idXR0b24+XHJcblxyXG4gICAgICAgICAgICAgIDxidXR0b25cclxuICAgICAgICAgICAgICAgIGRpc2FibGVkPXtidXN5fVxyXG4gICAgICAgICAgICAgICAgb25DbGljaz17ZGVsfVxyXG4gICAgICAgICAgICAgICAgY2xhc3NOYW1lPVwicm91bmRlZC0yeGwgYmctcmVkLTUwMC8yMCBweC00IHB5LTMgdGV4dC1zbSBmb250LXNlbWlib2xkIHRleHQtcmVkLTEwMCByaW5nLTEgcmluZy1yZWQtMzAwLzIwIGhvdmVyOmJnLXJlZC01MDAvMjVcIlxyXG4gICAgICAgICAgICAgICAgdHlwZT1cImJ1dHRvblwiXHJcbiAgICAgICAgICAgICAgPlxyXG4gICAgICAgICAgICAgICAgRGVsZXRlXHJcbiAgICAgICAgICAgICAgPC9idXR0b24+XHJcbiAgICAgICAgICAgIDwvZGl2PlxyXG4gICAgICAgICAgPC9mb3JtPlxyXG4gICAgICAgIDwvZGl2PlxyXG4gICAgICA8L2Rpdj5cclxuICAgIDwvZGl2PlxyXG4gICk7XHJcbn1cclxuIl0sImZpbGUiOiJDOi9Vc2Vycy9BZG1pbmlzdHJhdG9yL0Rlc2t0b3Avd29yay93YWxpZGQvaGFiaXQtdHJhY2tlci9oYWJpdC10cmFja2VyLWZyb250ZW5kL3NyYy9jb21wb25lbnRzL0VkaXRIYWJpdE1vZGFsLmpzeCJ9

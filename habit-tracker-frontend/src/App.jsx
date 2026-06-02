@@ -17,7 +17,6 @@ import { HabitsProvider } from "./context/HabitsContext";
 import AppShell from "./layouts/AppShell";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { setAuthToken } from "./lib/api";
-import { fetchHabits } from "./lib/habits";
 import NotificationsPage from "./pages/NotificationsPage";
 import { NotificationsProvider } from "./context/NotificationsContext";
 
@@ -41,7 +40,7 @@ export default function App() {
       <Routes>
         <Route
           path="/auth"
-          element={token ? <Navigate to="/app" replace /> : <Auth onAuthed={handleAuthed} />}
+          element={<Auth onAuthed={handleAuthed} />}
         />
 
         <Route
@@ -67,7 +66,16 @@ export default function App() {
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
         
-        <Route path="/" element={<Navigate to={token ? "/app" : "/auth"} replace />} />
+        <Route path="/" element={<Navigate to="/auth" replace />} />
+        <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+        <Route path="/calendar" element={<Navigate to="/app/calendar" replace />} />
+        <Route path="/recovery" element={<Navigate to="/app/recovery" replace />} />
+        <Route path="/recommended" element={<Navigate to="/app/recommended" replace />} />
+        <Route path="/library" element={<Navigate to="/app/library" replace />} />
+        <Route path="/insights" element={<Navigate to="/app/insights" replace />} />
+        <Route path="/notifications" element={<Navigate to="/app/notifications" replace />} />
+        <Route path="/alerts" element={<Navigate to="/app/notifications" replace />} />
+        <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </NotificationsProvider>

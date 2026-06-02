@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HabitSphere - Daily Meditation Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-tint": "#4c51bf",
+                            "tertiary-container": "#456648",
+                            "on-tertiary": "#ffffff",
+                            "secondary-fixed-dim": "#b8c8e0",
+                            "primary-container": "#4c51bf",
+                            "on-primary-container": "#d4d5ff",
+                            "on-primary-fixed": "#03006d",
+                            "on-tertiary-container": "#bce2bc",
+                            "inverse-primary": "#bfc1ff",
+                            "surface-container": "#ebeef0",
+                            "surface-container-high": "#e5e9eb",
+                            "inverse-on-surface": "#eef1f3",
+                            "primary-fixed-dim": "#bfc1ff",
+                            "on-surface-variant": "#464653",
+                            "tertiary": "#2d4e32",
+                            "on-tertiary-fixed": "#01210a",
+                            "surface-dim": "#d7dadc",
+                            "background": "#f7fafc",
+                            "surface-container-highest": "#e0e3e5",
+                            "outline": "#767684",
+                            "on-error-container": "#93000a",
+                            "secondary-fixed": "#d4e4fc",
+                            "on-secondary-fixed": "#0d1c2e",
+                            "secondary-container": "#d1e1fa",
+                            "on-error": "#ffffff",
+                            "on-secondary-container": "#556479",
+                            "on-primary": "#ffffff",
+                            "on-primary-fixed-variant": "#3337a6",
+                            "on-background": "#181c1e",
+                            "on-secondary": "#ffffff",
+                            "error-container": "#ffdad6",
+                            "secondary": "#515f74",
+                            "tertiary-fixed": "#c6ecc6",
+                            "error": "#ba1a1a",
+                            "on-secondary-fixed-variant": "#39485c",
+                            "surface-variant": "#e0e3e5",
+                            "surface": "#f7fafc",
+                            "inverse-surface": "#2d3133",
+                            "surface-bright": "#f7fafc",
+                            "primary-fixed": "#e1e0ff",
+                            "tertiary-fixed-dim": "#abd0ab",
+                            "primary": "#3337a6",
+                            "surface-container-lowest": "#ffffff",
+                            "outline-variant": "#c7c5d5",
+                            "on-tertiary-fixed-variant": "#2d4e32",
+                            "surface-container-low": "#f1f4f6",
+                            "on-surface": "#181c1e"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "margin-mobile": "16px",
+                            "xs": "4px",
+                            "max-width": "1200px",
+                            "gutter": "24px",
+                            "md": "16px",
+                            "xl": "32px",
+                            "xxl": "48px",
+                            "lg": "24px",
+                            "unit": "4px",
+                            "sm": "8px"
+                    },
+                    "fontFamily": {
+                            "label-caps": ["Inter"],
+                            "body-md": ["Inter"],
+                            "headline-lg": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "display-lg": ["Inter"],
+                            "stats-num": ["Inter"],
+                            "headline-lg-mobile": ["Inter"],
+                            "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                            "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.08em", "fontWeight": "600"}],
+                            "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                            "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                            "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                            "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                            "stats-num": ["24px", {"lineHeight": "1.0", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                            "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(199, 197, 213, 0.2);
+        }
+        .ai-glow {
+            box-shadow: 0 0 15px rgba(76, 81, 191, 0.15);
+        }
+        .heatmap-cell {
+            width: 100%;
+            padding-bottom: 100%;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col md:flex-row">
+<!-- SideNavBar (Desktop) -->
+<nav class="bg-surface dark:bg-on-background shadow-sm docked left-0 h-full w-64 hidden md:flex flex-col py-xl px-md z-40 fixed">
+<div class="mb-xl flex items-center gap-sm px-4">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="hub">hub</span>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">HabitSphere</span>
+</div>
+<div class="flex-1 space-y-sm">
+<a class="flex items-center gap-md px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+<span class="font-label-caps text-label-caps">Habit Library</span>
+</a>
+<a class="flex items-center gap-md px-4 py-3 rounded-lg text-primary dark:text-primary-fixed font-bold border-r-4 border-primary dark:border-primary-fixed bg-surface-container-low dark:bg-surface-container-highest transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="flex items-center gap-md px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span class="font-label-caps text-label-caps">Insights</span>
+</a>
+<a class="flex items-center gap-md px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-label-caps text-label-caps">Reports</span>
+</a>
+</div>
+<div class="mt-auto space-y-sm pt-xl border-t border-outline-variant/20">
+<button class="w-full bg-primary text-on-primary py-2 rounded-full font-label-caps text-label-caps hover:bg-on-primary-fixed-variant transition-colors mb-4">New Habit</button>
+<a class="flex items-center gap-md px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+<a class="flex items-center gap-md px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</div>
+</nav>
+<!-- TopNavBar (Mobile) -->
+<header class="bg-surface/70 dark:bg-on-background/70 backdrop-blur-xl border-b border-outline-variant/20 docked top-0 w-full z-50 md:hidden flex justify-between items-center px-md h-16 fixed">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">HabitSphere</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+<img alt="User avatar" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLlRtDLM6vFW8aB-o-a4uTYHUQcjQgF-lzG0rpLRc_GQ2D9lKpzpN7HtOR7bPJVJPDhJ8gHgDAujoZImo4stsECMldOS-UNM2oNfhCvhG6LmuvUOtY-4iy76y6yRe8HGYRBBm_nQrxQYIC8UtOJOgC68zNcjWlBdkJb0qtGTsmJFGdQJO6R0FY29XBjjfTyXVqaAjzjQG2G179Rzy-g5ya85iHvGSi9jqTZ2IhyCY8L7zHGdtln4qKnMjaw_AqTeeX4Y98kB6yvA"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 pt-20 md:pt-10 px-margin-mobile md:px-xl pb-32 md:pb-xl max-w-max-width mx-auto w-full">
+<!-- Header Section -->
+<header class="mb-xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<a class="text-on-surface-variant hover:text-primary flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+<span class="font-label-caps text-label-caps">Back to Library</span>
+</a>
+</div>
+<div class="flex items-center gap-3 flex-wrap">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface">Daily Meditation</h1>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="self_improvement">self_improvement</span>
+                            Mindfulness
+                        </span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface hover:bg-surface-container transition-colors font-label-caps text-label-caps flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span>
+                        Edit
+                    </button>
+<button class="px-4 py-2 rounded-full border border-error-container text-error hover:bg-error-container transition-colors font-label-caps text-label-caps flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span>
+                        Delete
+                    </button>
+</div>
+</div>
+</header>
+<!-- Stats Bento Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-md mb-xl">
+<!-- Current Streak -->
+<div class="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant/30 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between h-32 relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-5">
+<span class="material-symbols-outlined text-[100px]" data-icon="local_fire_department">local_fire_department</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Current Streak</span>
+<div class="flex items-end gap-2">
+<span class="font-stats-num text-stats-num text-primary">14</span>
+<span class="text-sm text-on-surface-variant pb-1">Days</span>
+</div>
+</div>
+<!-- Best Streak -->
+<div class="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant/30 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between h-32 relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-5">
+<span class="material-symbols-outlined text-[100px]" data-icon="trophy">trophy</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Best Streak</span>
+<div class="flex items-end gap-2">
+<span class="font-stats-num text-stats-num text-on-surface">42</span>
+<span class="text-sm text-on-surface-variant pb-1">Days</span>
+</div>
+</div>
+<!-- Completion Rate -->
+<div class="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant/30 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between h-32 relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-5">
+<span class="material-symbols-outlined text-[100px]" data-icon="pie_chart">pie_chart</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Completion Rate</span>
+<div class="flex items-end gap-2">
+<span class="font-stats-num text-stats-num text-tertiary">86%</span>
+<span class="text-sm text-tertiary-container pb-1 flex items-center">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span> +2%
+                    </span>
+</div>
+</div>
+<!-- Total Sessions -->
+<div class="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant/30 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between h-32 relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-5">
+<span class="material-symbols-outlined text-[100px]" data-icon="done_all">done_all</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Total Sessions</span>
+<div class="flex items-end gap-2">
+<span class="font-stats-num text-stats-num text-on-surface">128</span>
+<span class="text-sm text-on-surface-variant pb-1">All time</span>
+</div>
+</div>
+</section>
+<!-- Main Analytics Area: Heatmap & AI -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-xl mb-xl">
+<!-- Heatmap / Activity -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-lg border border-outline-variant/30 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-headline-md text-headline-md text-on-surface">Activity Map</h2>
+<select class="bg-surface-container text-on-surface font-label-caps text-label-caps border-none rounded-md py-1 px-2 focus:ring-1 focus:ring-primary">
+<option>Last 3 Months</option>
+<option>This Year</option>
+</select>
+</div>
+<!-- Simulated GitHub-style Heatmap -->
+<div class="w-full overflow-x-auto pb-4">
+<div class="min-w-[600px] flex gap-1">
+<!-- Simulated columns representing weeks -->
+<script>
+                            for(let i=0; i<16; i++) {
+                                document.write('<div class="flex flex-col gap-1 w-4">');
+                                for(let j=0; j<7; j++) {
+                                    // Randomize intensity for visual effect
+                                    const intensity = Math.random();
+                                    let bgClass = "bg-surface-variant";
+                                    if(intensity > 0.8) bgClass = "bg-tertiary";
+                                    else if(intensity > 0.5) bgClass = "bg-tertiary/70";
+                                    else if(intensity > 0.2) bgClass = "bg-tertiary-container/40";
+                                    
+                                    document.write(`<div class="heatmap-cell ${bgClass} rounded-[2px]" title="Contribution"></div>`);
+                                }
+                                document.write('</div>');
+                            }
+                        </script>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 mt-4 text-xs text-on-surface-variant">
+<span>Less</span>
+<div class="w-3 h-3 rounded-[2px] bg-surface-variant"></div>
+<div class="w-3 h-3 rounded-[2px] bg-tertiary-container/40"></div>
+<div class="w-3 h-3 rounded-[2px] bg-tertiary/70"></div>
+<div class="w-3 h-3 rounded-[2px] bg-tertiary"></div>
+<span>More</span>
+</div>
+</div>
+<!-- AI Insight & Risk -->
+<div class="flex flex-col gap-md">
+<!-- AI Analysis Card -->
+<div class="glass-panel rounded-xl p-lg ai-glow relative overflow-hidden flex-1">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-6xl text-primary" data-icon="psychology">psychology</span>
+</div>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="sparkles">colors_spark</span>
+<h3 class="font-label-caps text-label-caps text-primary tracking-widest">AI Pattern Analysis</h3>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface mb-4 leading-relaxed">
+                        You are <strong class="text-primary font-semibold">15% more likely</strong> to complete this habit when logged before 9 AM.
+                    </p>
+<div class="bg-primary/5 rounded-lg p-3 border border-primary/10">
+<p class="text-sm text-on-surface-variant flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary mt-0.5" data-icon="lightbulb">lightbulb</span>
+<span>Suggestion: Consider setting a gentle morning reminder specifically for 8:30 AM to capitalize on this natural rhythm.</span>
+</p>
+</div>
+</div>
+<!-- Risk Prediction -->
+<div class="bg-error-container/20 rounded-xl p-md border border-error-container">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+</div>
+<div>
+<h4 class="font-label-caps text-label-caps text-error mb-1">Lapse Risk Detected</h4>
+<p class="text-sm text-on-surface-variant">Moderate risk for upcoming weekend based on historical weekend drop-offs.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Trend Chart Section -->
+<section class="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant/30 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">30-Day Completion Trend</h2>
+<p class="text-sm text-on-surface-variant mt-1">Consistency moving average</p>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<!-- Minimalist Chart Visualization -->
+<div class="h-64 relative w-full flex items-end gap-2 px-4 pb-8 border-b border-outline-variant/20 pt-8">
+<!-- Y-Axis Reference Lines -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-8">
+<div class="w-full border-t border-outline-variant/10"></div>
+<div class="w-full border-t border-outline-variant/10"></div>
+<div class="w-full border-t border-outline-variant/10"></div>
+</div>
+<!-- Simulated Bars -->
+<script>
+                    for(let i=0; i<30; i++) {
+                        // Generate a trend that roughly goes up
+                        let baseHeight = 40 + (i * 1.5);
+                        let randomVol = (Math.random() * 30) - 15;
+                        let height = Math.max(10, Math.min(100, baseHeight + randomVol));
+                        
+                        // Highlight weekends (roughly every 7 days)
+                        let isWeekend = (i % 7 === 5 || i % 7 === 6);
+                        let colorClass = isWeekend ? "bg-surface-variant" : "bg-primary-container";
+                        let opacityClass = isWeekend ? "opacity-60" : "opacity-90 hover:opacity-100";
+                        
+                        document.write(`
+                            <div class="flex-1 flex flex-col justify-end items-center group relative h-full z-10">
+                                <div class="w-full max-w-[12px] rounded-t-sm ${colorClass} ${opacityClass} transition-all duration-300" style="height: ${height}%"></div>
+                                
+                                <!-- Tooltip -->
+                                <div class="absolute -top-10 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                                    Day ${i+1}: ${Math.round(height)}%
+                                </div>
+                                
+                                <!-- X-Axis Labels (every 5 days) -->
+                                ${i % 5 === 0 ? `<span class="absolute -bottom-6 text-[10px] text-on-surface-variant">${i+1}</span>` : ''}
+                            </div>
+                        `);
+                    }
+                </script>
+</div>
+<div class="flex justify-between text-xs text-on-surface-variant mt-2 px-4">
+<span>30 Days Ago</span>
+<span>Today</span>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="bg-surface/80 dark:bg-on-background/80 backdrop-blur-xl docked bottom-0 w-full md:hidden rounded-t-xl fixed z-50 flex justify-around items-center px-4 py-2 pb-safe border-t border-outline-variant/10 shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined" data-icon="list">list</span>
+<span class="font-label-caps text-label-caps mt-1">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed bg-primary-container/20 dark:bg-primary-container/10 rounded-xl px-4 py-1 scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="spark" style="font-variation-settings: 'FILL' 1;">spark</span>
+<span class="font-label-caps text-label-caps mt-1">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

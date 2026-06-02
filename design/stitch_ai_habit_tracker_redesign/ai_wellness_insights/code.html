@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HabitSphere - AI Insights</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d7dadc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c7c5d5; }
+    </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-tint": "#4c51bf",
+                        "tertiary-container": "#456648",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#b8c8e0",
+                        "primary-container": "#4c51bf",
+                        "on-primary-container": "#d4d5ff",
+                        "on-primary-fixed": "#03006d",
+                        "on-tertiary-container": "#bce2bc",
+                        "inverse-primary": "#bfc1ff",
+                        "surface-container": "#ebeef0",
+                        "surface-container-high": "#e5e9eb",
+                        "inverse-on-surface": "#eef1f3",
+                        "primary-fixed-dim": "#bfc1ff",
+                        "on-surface-variant": "#464653",
+                        "tertiary": "#2d4e32",
+                        "on-tertiary-fixed": "#01210a",
+                        "surface-dim": "#d7dadc",
+                        "background": "#f7fafc",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline": "#767684",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#d4e4fc",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "secondary-container": "#d1e1fa",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#556479",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#3337a6",
+                        "on-background": "#181c1e",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#515f74",
+                        "tertiary-fixed": "#c6ecc6",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#39485c",
+                        "surface-variant": "#e0e3e5",
+                        "surface": "#f7fafc",
+                        "inverse-surface": "#2d3133",
+                        "surface-bright": "#f7fafc",
+                        "primary-fixed": "#e1e0ff",
+                        "tertiary-fixed-dim": "#abd0ab",
+                        "primary": "#3337a6",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c7c5d5",
+                        "on-tertiary-fixed-variant": "#2d4e32",
+                        "surface-container-low": "#f1f4f6",
+                        "on-surface": "#181c1e"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1.25rem",
+                        "3xl": "1.5rem"
+                    },
+                    spacing: {
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "max-width": "1200px",
+                        "gutter": "24px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "xxl": "48px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "sm": "8px"
+                    },
+                    fontFamily: {
+                        "label-caps": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "display-lg": ["Inter", "sans-serif"],
+                        "stats-num": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"]
+                    },
+                    fontSize: {
+                        "label-caps": ["12px", { lineHeight: "1.0", letterSpacing: "0.08em", fontWeight: "600" }],
+                        "body-md": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
+                        "headline-lg": ["32px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "1.3", fontWeight: "500" }],
+                        "display-lg": ["48px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "600" }],
+                        "stats-num": ["24px", { lineHeight: "1.0", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "1.2", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }]
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 24px -4px rgba(0, 0, 0, 0.04)',
+                        'ai-glow': '0 0 24px rgba(76, 81, 191, 0.12)',
+                        'ai-glow-strong': '0 0 32px rgba(76, 81, 191, 0.2)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex selection:bg-primary/20 selection:text-primary">
+<!-- SideNavBar (Desktop) -->
+<nav class="bg-surface shadow-sm docked left-0 h-full w-64 hidden md:flex flex-col h-full py-xl px-md flex-shrink-0 z-40 relative">
+<div class="flex items-center gap-3 mb-xl px-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center overflow-hidden">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A close up portrait of a young professional woman with a soft, natural expression, wearing a minimalist pale grey top. The lighting is bright, even, and studio-quality, emphasizing clarity and modern corporate aesthetics. The background is a soft, out-of-focus bright studio setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHmJe2l3DLyx7PwwSeFP0emUOVqVP2cN4URiVk-DOafuI-p-fX9fpH0p2V0va6RMK95PbXjv9eIgyQPhdevehfScy4I8cLsnVX36UaZuLCQzOkIkZ7hYQr9BUNh5LaRYvxxou7qqL3TK6Ke_IGS3Oqrmsjvn1QYa6uRBImkBvwAmBI0CK07GWDQyCvM1d1_yr8I_bPUSJaz2B4maHKnbPQ26wvW2G1uYHGBvnGcAFv41Nv_l9b1f5WjFaa1UYLDxmVjFajGpOpdg"/>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">HabitSphere</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant opacity-70">AI-Powered Wellness</p>
+</div>
+</div>
+<button class="mb-lg mx-sm bg-primary text-on-primary py-3 px-4 rounded-lg font-label-caps text-label-caps flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-soft">
+<span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+            New Habit
+        </button>
+<div class="flex-1 flex flex-col gap-1 mt-md">
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-150" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-150" data-icon="list_alt">list_alt</span>
+<span class="font-label-caps text-label-caps">Habit Library</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-150" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<!-- Active (Insights Page) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-container-low scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="psychology" data-weight="fill" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-label-caps text-label-caps">Insights</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-150" data-icon="assessment">assessment</span>
+<span class="font-label-caps text-label-caps">Reports</span>
+</a>
+</div>
+<div class="mt-auto border-t border-outline-variant/20 pt-md flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-150" data-icon="account_circle">account_circle</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-150" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto bg-background relative pb-24 md:pb-0">
+<!-- TopNavBar -->
+<header class="bg-surface/70 backdrop-blur-xl border-b border-outline-variant/20 docked top-0 w-full z-50 sticky">
+<div class="flex justify-between items-center w-full px-md md:px-lg h-16 max-w-max-width mx-auto">
+<!-- Mobile Brand (Hidden on Desktop to avoid duplication with SideNav) -->
+<div class="md:hidden flex items-center">
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary tracking-tight">HabitSphere</span>
+</div>
+<!-- Desktop Search/Spacer -->
+<div class="hidden md:flex flex-1 max-w-md ml-lg">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50" style="font-size: 20px;">search</span>
+<input class="w-full bg-surface-container-lowest border-0 border-b border-outline-variant/30 px-10 py-2 text-body-md focus:ring-0 focus:border-primary transition-colors bg-transparent" placeholder="Search insights..." type="text"/>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4 ml-auto">
+<button class="hidden md:flex bg-primary text-on-primary px-4 py-2 rounded font-label-caps text-label-caps items-center gap-2 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" style="font-size: 16px;">add</span> Add Habit
+                    </button>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full ring-2 ring-surface"></span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden md:hidden border border-outline-variant/20">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="A close up portrait of a young professional woman with a soft, natural expression, wearing a minimalist pale grey top. The lighting is bright, even, and studio-quality, emphasizing clarity and modern corporate aesthetics. The background is a soft, out-of-focus bright studio setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCom8EZ3uydAzN-aQ7IcoGd1T1ogggGbFj3QRFM8cNxyglsne_M_o4V52zf9NC5cs26iiHVdf0ChIHpm1--gtxzxPUnydUbS7QajzzsFD5JQ5KmBwzRN2tYO7ZJURjIGMCg8dQ2jps6csfnRd3z-Rc5lPllYd3nFjQ85D2xgXVGrz41S9MKQQGKJfqI_564P9vJlrIpO1fKV9kNdzhQCor1Zo2ZC51pdO2snjb24dLkFzSKjgWZFVBfeUoy2Q1YywYndvuGE7g-BA"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 w-full max-w-max-width mx-auto p-margin-mobile md:p-gutter pt-xl md:pt-xxl space-y-xl">
+<!-- Page Header -->
+<div class="max-w-2xl">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary mb-4 ring-1 ring-primary/20">
+<span class="material-symbols-outlined text-sm" style="font-size: 14px;">psychology_alt</span>
+<span class="font-label-caps text-label-caps">Intelligence Core Active</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-background mb-2">Cognitive Insights</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Deep learning analysis of your behavioral patterns across the last 180 days.</p>
+</div>
+<!-- AI Insight Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-lg auto-rows-min">
+<!-- Primary Insight (Spans 8 columns on desktop) -->
+<div class="md:col-span-8 bg-surface-container-lowest rounded-2xl p-lg md:p-xl border border-outline-variant/30 shadow-ai-glow relative overflow-hidden flex flex-col justify-between group">
+<!-- Subtle gradient background purely for aesthetic depth -->
+<div class="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent pointer-events-none"></div>
+<div class="relative z-10">
+<div class="flex items-start justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined" data-icon="spark">spark</span>
+</div>
+<div>
+<h3 class="font-label-caps text-label-caps text-primary tracking-widest uppercase">High-Impact Discovery</h3>
+<span class="font-body-md text-body-md text-on-surface-variant text-sm">Pattern Recognition</span>
+</div>
+</div>
+<!-- Confidence Badge -->
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint/10 text-primary border border-surface-tint/20">
+<span class="material-symbols-outlined" style="font-size: 14px;">verified</span>
+<span class="font-label-caps text-label-caps">92% Confidence</span>
+</div>
+</div>
+<div class="space-y-6">
+<h4 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background max-w-2xl leading-tight">
+                                Late night logging correlates heavily with missed morning habits.
+                            </h4>
+<!-- Recommendation Block (Glassmorphic) -->
+<div class="bg-surface/60 backdrop-blur-md border border-outline-variant/20 rounded-xl p-6 relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl"></div>
+<h5 class="font-label-caps text-label-caps text-on-surface-variant mb-2">AI Recommendation</h5>
+<p class="font-body-lg text-body-lg text-on-background">
+                                    Try moving <span class="font-semibold text-primary">Deep Work Session</span> to 8 AM to increase completion probability based on your natural energy cycles.
+                                </p>
+</div>
+</div>
+</div>
+<div class="relative z-10 mt-8 pt-6 border-t border-outline-variant/20 flex items-center justify-between text-sm">
+<p class="font-body-md text-on-surface-variant opacity-80 italic">Explained Reasoning: Based on your previous 6 months of logging data and sleep metrics.</p>
+<button class="font-label-caps text-label-caps text-primary hover:text-primary-fixed-variant transition-colors flex items-center gap-1">
+                            View Data Set <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Secondary Insight (Spans 4 columns) -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-2xl p-lg border border-outline-variant/30 shadow-soft flex flex-col hover:shadow-ai-glow transition-shadow duration-300">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="timeline">timeline</span>
+</div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Velocity Trend</h3>
+</div>
+<div class="flex-1">
+<div class="text-stats-num font-stats-num text-on-background mb-1">+14%</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Consistency improvement in Mindfulness routines.</p>
+<!-- Abstract Data Viz (CSS Based) -->
+<div class="h-24 w-full relative flex items-end justify-between px-2 pb-2 border-b border-outline-variant/20">
+<div class="w-4 bg-surface-container rounded-t-sm h-[30%]"></div>
+<div class="w-4 bg-surface-container rounded-t-sm h-[45%]"></div>
+<div class="w-4 bg-surface-container rounded-t-sm h-[40%]"></div>
+<div class="w-4 bg-primary/40 rounded-t-sm h-[70%]"></div>
+<div class="w-4 bg-primary/60 rounded-t-sm h-[85%]"></div>
+<div class="w-4 bg-primary rounded-t-sm h-[100%] shadow-[0_0_10px_rgba(51,55,166,0.5)]"></div>
+</div>
+</div>
+</div>
+<!-- Tertiary Insight / Prompt (Spans 4 columns) -->
+<div class="md:col-span-4 bg-surface-container-low rounded-2xl p-lg border border-outline-variant/20 shadow-soft">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-tertiary-container" data-icon="energy_savings_leaf">energy_savings_leaf</span>
+<h3 class="font-label-caps text-label-caps text-tertiary-container uppercase">Environmental Factor</h3>
+</div>
+<p class="font-body-md text-body-md text-on-background mb-4">You complete 30% more fitness tasks on days marked as 'Sunny' in your local weather.</p>
+<div class="inline-block px-3 py-1 bg-tertiary-container/10 text-tertiary-container rounded-full font-label-caps text-label-caps">
+                        Correlation Noted
+                    </div>
+</div>
+<!-- Actionable Nudge (Spans 8 columns) -->
+<div class="md:col-span-8 bg-inverse-surface text-inverse-on-surface rounded-2xl p-lg md:p-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+<div class="flex-1">
+<h4 class="font-headline-md text-headline-md mb-2 text-surface-container-lowest">System Calibration Recommended</h4>
+<p class="font-body-md text-body-md opacity-80">Your "Reading" habit has a high failure rate on weekends. Would you like AI to suggest a restructured timeline?</p>
+</div>
+<div class="flex gap-3 w-full md:w-auto">
+<button class="flex-1 md:flex-none px-6 py-3 rounded-lg border border-outline/50 hover:bg-outline/10 transition-colors font-label-caps text-label-caps">Dismiss</button>
+<button class="flex-1 md:flex-none px-6 py-3 rounded-lg bg-primary text-on-primary hover:bg-primary/90 transition-colors font-label-caps text-label-caps shadow-ai-glow-strong">Auto-Adjust</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10 docked bottom-0 w-full md:hidden rounded-t-xl shadow-lg fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe">
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors py-1 px-4" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home" style="font-size: 24px;">home</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider">Home</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors py-1 px-4" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="list" style="font-size: 24px;">list</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider">Library</span>
+</a>
+<!-- Active (Insights Page) -->
+<a class="flex flex-col items-center justify-center text-primary bg-primary-container/20 rounded-xl px-4 py-1 scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="spark" data-weight="fill" style="font-variation-settings: 'FILL' 1; font-size: 24px;">spark</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider font-bold">Insights</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors py-1 px-4" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person" style="font-size: 24px;">person</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider">Profile</span>
+</a>
+</nav>
+</body></html>

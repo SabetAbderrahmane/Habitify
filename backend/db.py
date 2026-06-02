@@ -41,6 +41,11 @@ def init_db() -> None:
                 target TEXT NOT NULL DEFAULT 'Daily',
                 frequency TEXT NOT NULL DEFAULT 'daily',
                 archived INTEGER NOT NULL DEFAULT 0,
+                description TEXT DEFAULT '',
+                reminder_time TEXT DEFAULT '',
+                preferred_time_window TEXT DEFAULT '',
+                goal_value INTEGER DEFAULT 1,
+                goal_unit TEXT DEFAULT 'session',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(user_id, name),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -56,7 +61,10 @@ def init_db() -> None:
                 user_id INTEGER NOT NULL,
                 progress INTEGER NOT NULL,
                 date TEXT NOT NULL,
+                note TEXT DEFAULT '',
+                completed_at TEXT DEFAULT '',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(user_id, habit_id, date),
                 FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -76,6 +84,10 @@ def init_db() -> None:
                 difficult TEXT DEFAULT '',
                 note TEXT DEFAULT '',
                 completed INTEGER NOT NULL DEFAULT 0,
+                sleep_hours REAL DEFAULT NULL,
+                sleep_quality TEXT DEFAULT '',
+                weather_condition TEXT DEFAULT '',
+                temperature_c REAL DEFAULT NULL,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(user_id, date),
@@ -197,9 +209,69 @@ def init_db() -> None:
         )
 
         migrate_habits(conn)
+        migrate_stitch_compatibility(conn)
         conn.commit()
     finally:
         conn.close()
+
+
+def _table_columns(conn: sqlite3.Connection, table_name: str) -> set[str]:
+    cur = conn.execute(f"PRAGMA table_info({table_name})")
+    return {row["name"] for row in cur.fetchall()}
+
+
+def _add_column_if_missing(
+    conn: sqlite3.Connection,
+    table_name: str,
+    column_name: str,
+    column_definition: str,
+) -> None:
+    columns = _table_columns(conn, table_name)
+    if column_name not in columns:
+        try:
+            conn.execute(
+                f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}"
+            )
+        except sqlite3.OperationalError:
+            if column_definition == "TEXT DEFAULT CURRENT_TIMESTAMP":
+                conn.execute(
+                    f"ALTER TABLE {table_name} ADD COLUMN {column_name} TEXT DEFAULT ''"
+                )
+                conn.execute(
+                    f"UPDATE {table_name} SET {column_name} = CURRENT_TIMESTAMP WHERE {column_name} = ''"
+                )
+            else:
+                raise
+
+
+def migrate_stitch_compatibility(conn: sqlite3.Connection) -> None:
+    """Add optional Stitch redesign fields without rebuilding existing tables."""
+    habit_columns = {
+        "description": "TEXT DEFAULT ''",
+        "reminder_time": "TEXT DEFAULT ''",
+        "preferred_time_window": "TEXT DEFAULT ''",
+        "goal_value": "INTEGER DEFAULT 1",
+        "goal_unit": "TEXT DEFAULT 'session'",
+    }
+    for column_name, definition in habit_columns.items():
+        _add_column_if_missing(conn, "habits", column_name, definition)
+
+    habit_log_columns = {
+        "note": "TEXT DEFAULT ''",
+        "completed_at": "TEXT DEFAULT ''",
+        "updated_at": "TEXT DEFAULT CURRENT_TIMESTAMP",
+    }
+    for column_name, definition in habit_log_columns.items():
+        _add_column_if_missing(conn, "habit_logs", column_name, definition)
+
+    daily_checkin_columns = {
+        "sleep_hours": "REAL DEFAULT NULL",
+        "sleep_quality": "TEXT DEFAULT ''",
+        "weather_condition": "TEXT DEFAULT ''",
+        "temperature_c": "REAL DEFAULT NULL",
+    }
+    for column_name, definition in daily_checkin_columns.items():
+        _add_column_if_missing(conn, "daily_checkins", column_name, definition)
 
 
 def migrate_habits(conn: sqlite3.Connection) -> None:

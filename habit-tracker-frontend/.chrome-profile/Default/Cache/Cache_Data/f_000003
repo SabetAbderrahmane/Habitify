@@ -1,0 +1,239 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/App.jsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=3ef80c3a"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+var _s = $RefreshSig$();
+import __vite__cjsImport1_react from "/node_modules/.vite/deps/react.js?v=3ef80c3a"; const useEffect = __vite__cjsImport1_react["useEffect"]; const useState = __vite__cjsImport1_react["useState"];
+import { BrowserRouter, Routes, Route, Navigate } from "/node_modules/.vite/deps/react-router-dom.js?v=3ef80c3a";
+import Auth from "/src/pages/Auth.jsx?t=1780424516753";
+import Dashboard from "/src/pages/Dashboard.jsx";
+import CalendarPage from "/src/pages/CalendarPage.jsx";
+import InsightsPage from "/src/pages/InsightsPage.jsx";
+import SettingsPage from "/src/pages/SettingsPage.jsx";
+import HabitDetail from "/src/pages/HabitDetail.jsx";
+import HabitLibrary from "/src/pages/HabitLibrary.jsx";
+import RecommendedPage from "/src/pages/RecommendedPage.jsx";
+import CoreHabitsPage from "/src/pages/CoreHabitsPage.jsx";
+import RecoveryPage from "/src/pages/RecoveryPage.jsx";
+import DailyCheckinPage from "/src/pages/DailyCheckinPage.jsx?t=1780425857530";
+import { HabitsProvider } from "/src/context/HabitsContext.jsx";
+import AppShell from "/src/layouts/AppShell.jsx";
+import ProtectedRoute from "/src/components/ProtectedRoute.jsx";
+import { setAuthToken } from "/src/lib/api.js";
+import NotificationsPage from "/src/pages/NotificationsPage.jsx";
+import { NotificationsProvider } from "/src/context/NotificationsContext.jsx";
+export default function App() {
+  _s();
+  const [token, setToken] = useState(localStorage.getItem("access_token") || "");
+  useEffect(() => setAuthToken(token), [token]);
+  const handleAuthed = (t) => setToken(t);
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    setToken("");
+  };
+  return /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(NotificationsProvider, { children: /* @__PURE__ */ jsxDEV(Routes, { children: [
+    /* @__PURE__ */ jsxDEV(
+      Route,
+      {
+        path: "/auth",
+        element: /* @__PURE__ */ jsxDEV(Auth, { onAuthed: handleAuthed }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+          lineNumber: 43,
+          columnNumber: 22
+        }, this)
+      },
+      void 0,
+      false,
+      {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+        lineNumber: 41,
+        columnNumber: 9
+      },
+      this
+    ),
+    /* @__PURE__ */ jsxDEV(
+      Route,
+      {
+        path: "/app",
+        element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { token, children: /* @__PURE__ */ jsxDEV(HabitsProvider, { token, children: /* @__PURE__ */ jsxDEV(AppShell, { onLogout: logout }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+          lineNumber: 51,
+          columnNumber: 17
+        }, this) }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+          lineNumber: 50,
+          columnNumber: 15
+        }, this) }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+          lineNumber: 49,
+          columnNumber: 13
+        }, this),
+        children: [
+          /* @__PURE__ */ jsxDEV(Route, { index: true, element: /* @__PURE__ */ jsxDEV(Dashboard, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 56,
+            columnNumber: 33
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 56,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "calendar", element: /* @__PURE__ */ jsxDEV(CalendarPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 57,
+            columnNumber: 43
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 57,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "insights", element: /* @__PURE__ */ jsxDEV(InsightsPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 58,
+            columnNumber: 43
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 58,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "settings", element: /* @__PURE__ */ jsxDEV(SettingsPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 59,
+            columnNumber: 43
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 59,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "library", element: /* @__PURE__ */ jsxDEV(HabitLibrary, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 60,
+            columnNumber: 42
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 60,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "recommended", element: /* @__PURE__ */ jsxDEV(RecommendedPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 61,
+            columnNumber: 46
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 61,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "core", element: /* @__PURE__ */ jsxDEV(CoreHabitsPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 62,
+            columnNumber: 39
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 62,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "recovery", element: /* @__PURE__ */ jsxDEV(RecoveryPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 63,
+            columnNumber: 43
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 63,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "checkin", element: /* @__PURE__ */ jsxDEV(DailyCheckinPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 64,
+            columnNumber: 42
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 64,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "habit/:habitName", element: /* @__PURE__ */ jsxDEV(HabitDetail, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 65,
+            columnNumber: 51
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 65,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "notifications", element: /* @__PURE__ */ jsxDEV(NotificationsPage, {}, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 66,
+            columnNumber: 48
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+            lineNumber: 66,
+            columnNumber: 11
+          }, this)
+        ]
+      },
+      void 0,
+      true,
+      {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+        lineNumber: 46,
+        columnNumber: 9
+      },
+      this
+    ),
+    /* @__PURE__ */ jsxDEV(Route, { path: "/", element: /* @__PURE__ */ jsxDEV(Navigate, { to: "/auth", replace: true }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+      lineNumber: 69,
+      columnNumber: 34
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+      lineNumber: 69,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Route, { path: "*", element: /* @__PURE__ */ jsxDEV(Navigate, { to: "/", replace: true }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+      lineNumber: 70,
+      columnNumber: 34
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+      lineNumber: 70,
+      columnNumber: 9
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+    lineNumber: 40,
+    columnNumber: 7
+  }, this) }, void 0, false, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+    lineNumber: 39,
+    columnNumber: 7
+  }, this) }, void 0, false, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx",
+    lineNumber: 38,
+    columnNumber: 5
+  }, this);
+}
+_s(App, "pia+2GK8nR0TTxJZT7j4GZxGTOc=");
+_c = App;
+var _c;
+$RefreshReg$(_c, "App");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) {
+  return RefreshRuntime.register(type, "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/App.jsx " + id);
+}
+function $RefreshSig$() {
+  return RefreshRuntime.createSignatureFunctionForTransform();
+}
+
+//# sourceMappingURL=data:application/json;base64,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U0FtQ0E7QUFFSjtBQUFDUCxHQWxEdUJELEtBQUc7QUFBQSxLQUFIQTtBQUFHLElBQUFVO0FBQUEsYUFBQUEsSUFBQSIsIm5hbWVzIjpbInVzZUVmZmVjdCIsInVzZVN0YXRlIiwiQnJvd3NlclJvdXRlciIsIlJvdXRlcyIsIlJvdXRlIiwiTmF2aWdhdGUiLCJBdXRoIiwiRGFzaGJvYXJkIiwiQ2FsZW5kYXJQYWdlIiwiSW5zaWdodHNQYWdlIiwiU2V0dGluZ3NQYWdlIiwiSGFiaXREZXRhaWwiLCJIYWJpdExpYnJhcnkiLCJSZWNvbW1lbmRlZFBhZ2UiLCJDb3JlSGFiaXRzUGFnZSIsIlJlY292ZXJ5UGFnZSIsIkRhaWx5Q2hlY2tpblBhZ2UiLCJIYWJpdHNQcm92aWRlciIsIkFwcFNoZWxsIiwiUHJvdGVjdGVkUm91dGUiLCJzZXRBdXRoVG9rZW4iLCJOb3RpZmljYXRpb25zUGFnZSIsIk5vdGlmaWNhdGlvbnNQcm92aWRlciIsIkFwcCIsIl9zIiwidG9rZW4iLCJzZXRUb2tlbiIsImxvY2FsU3RvcmFnZSIsImdldEl0ZW0iLCJoYW5kbGVBdXRoZWQiLCJ0IiwibG9nb3V0IiwicmVtb3ZlSXRlbSIsIl9jIl0sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbIkFwcC5qc3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VTdGF0ZSB9IGZyb20gXCJyZWFjdFwiO1xyXG5pbXBvcnQgeyBCcm93c2VyUm91dGVyLCBSb3V0ZXMsIFJvdXRlLCBOYXZpZ2F0ZSB9IGZyb20gXCJyZWFjdC1yb3V0ZXItZG9tXCI7XHJcblxyXG5pbXBvcnQgQXV0aCBmcm9tIFwiLi9wYWdlcy9BdXRoXCI7XHJcbmltcG9ydCBEYXNoYm9hcmQgZnJvbSBcIi4vcGFnZXMvRGFzaGJvYXJkXCI7XHJcbmltcG9ydCBDYWxlbmRhclBhZ2UgZnJvbSBcIi4vcGFnZXMvQ2FsZW5kYXJQYWdlXCI7XHJcbmltcG9ydCBJbnNpZ2h0c1BhZ2UgZnJvbSBcIi4vcGFnZXMvSW5zaWdodHNQYWdlXCI7XHJcbmltcG9ydCBTZXR0aW5nc1BhZ2UgZnJvbSBcIi4vcGFnZXMvU2V0dGluZ3NQYWdlXCI7XHJcbmltcG9ydCBIYWJpdERldGFpbCBmcm9tIFwiLi9wYWdlcy9IYWJpdERldGFpbFwiO1xyXG5pbXBvcnQgSGFiaXRMaWJyYXJ5IGZyb20gXCIuL3BhZ2VzL0hhYml0TGlicmFyeVwiO1xyXG5pbXBvcnQgUmVjb21tZW5kZWRQYWdlIGZyb20gXCIuL3BhZ2VzL1JlY29tbWVuZGVkUGFnZVwiO1xyXG5pbXBvcnQgQ29yZUhhYml0c1BhZ2UgZnJvbSBcIi4vcGFnZXMvQ29yZUhhYml0c1BhZ2VcIjtcclxuaW1wb3J0IFJlY292ZXJ5UGFnZSBmcm9tIFwiLi9wYWdlcy9SZWNvdmVyeVBhZ2VcIjtcclxuaW1wb3J0IERhaWx5Q2hlY2tpblBhZ2UgZnJvbSBcIi4vcGFnZXMvRGFpbHlDaGVja2luUGFnZVwiO1xyXG5pbXBvcnQgeyBIYWJpdHNQcm92aWRlciB9IGZyb20gXCIuL2NvbnRleHQvSGFiaXRzQ29udGV4dFwiO1xyXG5cclxuaW1wb3J0IEFwcFNoZWxsIGZyb20gXCIuL2xheW91dHMvQXBwU2hlbGxcIjtcbmltcG9ydCBQcm90ZWN0ZWRSb3V0ZSBmcm9tIFwiLi9jb21wb25lbnRzL1Byb3RlY3RlZFJvdXRlXCI7XG5pbXBvcnQgeyBzZXRBdXRoVG9rZW4gfSBmcm9tIFwiLi9saWIvYXBpXCI7XG5pbXBvcnQgTm90aWZpY2F0aW9uc1BhZ2UgZnJvbSBcIi4vcGFnZXMvTm90aWZpY2F0aW9uc1BhZ2VcIjtcbmltcG9ydCB7IE5vdGlmaWNhdGlvbnNQcm92aWRlciB9IGZyb20gXCIuL2NvbnRleHQvTm90aWZpY2F0aW9uc0NvbnRleHRcIjtcblxyXG5cclxuXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIEFwcCgpIHtcclxuICBjb25zdCBbdG9rZW4sIHNldFRva2VuXSA9IHVzZVN0YXRlKGxvY2FsU3RvcmFnZS5nZXRJdGVtKFwiYWNjZXNzX3Rva2VuXCIpIHx8IFwiXCIpO1xyXG5cclxuICB1c2VFZmZlY3QoKCkgPT4gc2V0QXV0aFRva2VuKHRva2VuKSwgW3Rva2VuXSk7XHJcblxyXG4gIGNvbnN0IGhhbmRsZUF1dGhlZCA9ICh0KSA9PiBzZXRUb2tlbih0KTtcclxuXHJcbiAgY29uc3QgbG9nb3V0ID0gKCkgPT4ge1xyXG4gICAgbG9jYWxTdG9yYWdlLnJlbW92ZUl0ZW0oXCJhY2Nlc3NfdG9rZW5cIik7XHJcbiAgICBzZXRUb2tlbihcIlwiKTtcclxuICB9O1xyXG5cclxuICByZXR1cm4gKFxyXG4gICAgPEJyb3dzZXJSb3V0ZXI+XHJcbiAgICAgIDxOb3RpZmljYXRpb25zUHJvdmlkZXI+XHJcbiAgICAgIDxSb3V0ZXM+XHJcbiAgICAgICAgPFJvdXRlXG4gICAgICAgICAgcGF0aD1cIi9hdXRoXCJcbiAgICAgICAgICBlbGVtZW50PXs8QXV0aCBvbkF1dGhlZD17aGFuZGxlQXV0aGVkfSAvPn1cbiAgICAgICAgLz5cblxyXG4gICAgICAgIDxSb3V0ZVxyXG4gICAgICAgICAgcGF0aD1cIi9hcHBcIlxyXG4gICAgICAgICAgZWxlbWVudD17XHJcbiAgICAgICAgICAgIDxQcm90ZWN0ZWRSb3V0ZSB0b2tlbj17dG9rZW59PlxyXG4gICAgICAgICAgICAgIDxIYWJpdHNQcm92aWRlciB0b2tlbj17dG9rZW59PlxyXG4gICAgICAgICAgICAgICAgPEFwcFNoZWxsIG9uTG9nb3V0PXtsb2dvdXR9IC8+XHJcbiAgICAgICAgICAgICAgPC9IYWJpdHNQcm92aWRlcj5cclxuICAgICAgICAgICAgPC9Qcm90ZWN0ZWRSb3V0ZT5cclxuICAgICAgICAgIH1cclxuICAgICAgICA+XHJcbiAgICAgICAgICA8Um91dGUgaW5kZXggZWxlbWVudD17PERhc2hib2FyZCAvPn0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiY2FsZW5kYXJcIiBlbGVtZW50PXs8Q2FsZW5kYXJQYWdlIC8+fSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCJpbnNpZ2h0c1wiIGVsZW1lbnQ9ezxJbnNpZ2h0c1BhZ2UgLz59IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cInNldHRpbmdzXCIgZWxlbWVudD17PFNldHRpbmdzUGFnZSAvPn0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwibGlicmFyeVwiIGVsZW1lbnQ9ezxIYWJpdExpYnJhcnkgLz59IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cInJlY29tbWVuZGVkXCIgZWxlbWVudD17PFJlY29tbWVuZGVkUGFnZSAvPn0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiY29yZVwiIGVsZW1lbnQ9ezxDb3JlSGFiaXRzUGFnZSAvPn0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwicmVjb3ZlcnlcIiBlbGVtZW50PXs8UmVjb3ZlcnlQYWdlIC8+fSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCJjaGVja2luXCIgZWxlbWVudD17PERhaWx5Q2hlY2tpblBhZ2UgLz59IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cImhhYml0LzpoYWJpdE5hbWVcIiBlbGVtZW50PXs8SGFiaXREZXRhaWwgLz59IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIm5vdGlmaWNhdGlvbnNcIiBlbGVtZW50PXs8Tm90aWZpY2F0aW9uc1BhZ2UgLz59IC8+XHJcbiAgICAgICAgPC9Sb3V0ZT5cclxuICAgICAgICBcclxuICAgICAgICA8Um91dGUgcGF0aD1cIi9cIiBlbGVtZW50PXs8TmF2aWdhdGUgdG89XCIvYXV0aFwiIHJlcGxhY2UgLz59IC8+XG4gICAgICAgIDxSb3V0ZSBwYXRoPVwiKlwiIGVsZW1lbnQ9ezxOYXZpZ2F0ZSB0bz1cIi9cIiByZXBsYWNlIC8+fSAvPlxyXG4gICAgICA8L1JvdXRlcz5cclxuICAgICAgPC9Ob3RpZmljYXRpb25zUHJvdmlkZXI+XHJcbiAgICA8L0Jyb3dzZXJSb3V0ZXI+XHJcbiAgKTtcclxufVxyXG4iXSwiZmlsZSI6IkM6L1VzZXJzL0FkbWluaXN0cmF0b3IvRGVza3RvcC93b3JrL3dhbGlkZC9oYWJpdC10cmFja2VyL2hhYml0LXRyYWNrZXItZnJvbnRlbmQvc3JjL0FwcC5qc3gifQ==

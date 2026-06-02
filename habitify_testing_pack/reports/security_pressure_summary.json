@@ -1,0 +1,14 @@
+{
+  "test": "invalid_login_pressure",
+  "attempts": 100,
+  "concurrency": 20,
+  "elapsed_seconds": 0.14,
+  "requests_per_second": 737.92,
+  "status_counts": {
+    "400": 100
+  },
+  "avg_ms": 22.52,
+  "p50_ms": 22.65,
+  "max_ms": 36.86,
+  "security_interpretation": "Expected behavior: every invalid login should be rejected with 400. If there are no 429 responses, the app currently has no visible rate limiting. That is acceptable for a thesis prototype only if documented as a limitation."
+}

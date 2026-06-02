@@ -2,7 +2,21 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import auth, habit, checkin, recovery, content, profile, nudges, notifications, export_data, predictions
+from api import (
+    analytics,
+    auth,
+    checkin,
+    content,
+    export_data,
+    habit,
+    insights,
+    notifications,
+    nudges,
+    predictions,
+    profile,
+    recovery,
+    reports,
+)
 from db import init_db, seed_recommended_and_core_data
 from config import CORS_ORIGINS
 
@@ -34,6 +48,9 @@ app.include_router(nudges.router)
 app.include_router(notifications.router)
 app.include_router(export_data.router)
 app.include_router(predictions.router)
+app.include_router(analytics.router)
+app.include_router(insights.router)
+app.include_router(reports.router)
 
 
 @app.get("/")

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HabitSphere - Daily Check-in</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#4c51bf",
+                        "tertiary-container": "#456648",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#b8c8e0",
+                        "primary-container": "#4c51bf",
+                        "on-primary-container": "#d4d5ff",
+                        "on-primary-fixed": "#03006d",
+                        "on-tertiary-container": "#bce2bc",
+                        "inverse-primary": "#bfc1ff",
+                        "surface-container": "#ebeef0",
+                        "surface-container-high": "#e5e9eb",
+                        "inverse-on-surface": "#eef1f3",
+                        "primary-fixed-dim": "#bfc1ff",
+                        "on-surface-variant": "#464653",
+                        "tertiary": "#2d4e32",
+                        "on-tertiary-fixed": "#01210a",
+                        "surface-dim": "#d7dadc",
+                        "background": "#f7fafc",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline": "#767684",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#d4e4fc",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "secondary-container": "#d1e1fa",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#556479",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#3337a6",
+                        "on-background": "#181c1e",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#515f74",
+                        "tertiary-fixed": "#c6ecc6",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#39485c",
+                        "surface-variant": "#e0e3e5",
+                        "surface": "#f7fafc",
+                        "inverse-surface": "#2d3133",
+                        "surface-bright": "#f7fafc",
+                        "primary-fixed": "#e1e0ff",
+                        "tertiary-fixed-dim": "#abd0ab",
+                        "primary": "#3337a6",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c7c5d5",
+                        "on-tertiary-fixed-variant": "#2d4e32",
+                        "surface-container-low": "#f1f4f6",
+                        "on-surface": "#181c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "max-width": "1200px",
+                        "gutter": "24px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "xxl": "48px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "stats-num": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "stats-num": ["24px", { "lineHeight": "1.0", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom animation for habit checking */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(171, 208, 171, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(171, 208, 171, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(171, 208, 171, 0); }
+        }
+        .habit-logged {
+            animation: pulse-ring 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- SideNavBar (Desktop) -->
+<nav class="bg-surface dark:bg-on-background shadow-sm docked left-0 h-full w-64 hidden md:flex flex-col py-xl px-md fixed z-40 border-r border-outline-variant/10">
+<div class="flex items-center gap-3 mb-xl px-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">HabitSphere</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant text-[10px]">AI-Powered Wellness</p>
+</div>
+</div>
+<button class="bg-primary text-on-primary rounded-xl py-3 px-4 mb-lg font-label-caps text-label-caps w-full flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+            New Habit
+        </button>
+<div class="flex-1 flex flex-col gap-2">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-primary-fixed font-bold border-r-4 border-primary dark:border-primary-fixed bg-surface-container-low dark:bg-surface-container-highest scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined fill" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+<span class="font-label-caps text-label-caps">Habit Library</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span class="font-label-caps text-label-caps">Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-label-caps text-label-caps">Reports</span>
+</a>
+</div>
+<div class="mt-auto border-t border-outline-variant/20 pt-4 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-h-screen w-full md:pl-64">
+<!-- TopNavBar -->
+<header class="bg-surface/70 dark:bg-on-background/70 backdrop-blur-xl border-b border-outline-variant/20 docked top-0 w-full z-30 sticky">
+<div class="flex justify-between items-center w-full px-md md:px-lg h-16 max-w-max-width mx-auto">
+<div class="flex items-center gap-3 md:hidden">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-sm" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed text-lg">HabitSphere</h1>
+</div>
+<div class="hidden md:block"></div> <!-- Spacer for desktop -->
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors hidden md:block">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors hidden sm:block">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<button class="bg-primary-container text-on-primary-container rounded-full px-4 py-1.5 font-label-caps text-label-caps hidden sm:block hover:opacity-80 transition-opacity">
+                        Add Habit
+                    </button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 cursor-pointer">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="A professional studio portrait of a confident young person serving as a user profile avatar. The subject is well-lit with soft, flattering front lighting against a clean, minimalist off-white background. They have a subtle, approachable smile and are wearing modern, casual corporate attire that fits the polished, calming aesthetic of a high-end wellness app. The overall mood is bright, welcoming, and intelligently designed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsUBwMxCY-nKCAxzK20j0fodOOcc5vW2wEXjHfI2VcdGoZcS3UfX0XbF0u4U2f-NkpfbXm6NGn5EgL7jJFCUt4ByAXeHSHjbzxeZbOy0IuffhWIMyqQz-Gwps7hV-9jcC7ov6OVBob3pli87RSJhBGTjxH5aB6tghLaaPhwcZ9Loo5qWFdOhUiI-8MWR6sGoPWxA54B6hdt5ue9IfMNJzEfuxi_y6dKhd-WZoPiyS2uHTLeNPDTQ0N8u21hGENf_jVQfzwey1iTg"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 p-md md:p-lg lg:p-xl max-w-max-width w-full mx-auto pb-24 md:pb-xl">
+<!-- Hero / Progress Section -->
+<section class="mb-xl flex flex-col items-center justify-center text-center mt-lg">
+<div class="relative w-40 h-40 mb-6">
+<!-- Background Ring -->
+<svg class="w-full h-full" viewbox="0 0 100 100">
+<circle class="text-surface-variant stroke-current" cx="50" cy="50" fill="transparent" r="44" stroke-width="6"></circle>
+<!-- Progress Ring (66% completion) -->
+<circle class="text-primary stroke-current transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="44" stroke-dasharray="276.46" stroke-dashoffset="94" stroke-linecap="round" stroke-width="6" transform="rotate(-90 50 50)"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-stats-num text-stats-num text-primary text-4xl">66<span class="text-2xl">%</span></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-1">Today</span>
+</div>
+</div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">
+                    4 down, 2 to go.
+                </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md">
+                    You're building solid momentum today. Keep the focus sharp.
+                </p>
+</section>
+<!-- Habits List -->
+<section class="flex flex-col gap-4 max-w-3xl mx-auto">
+<h3 class="font-label-caps text-label-caps text-outline mb-2 ml-1">Today's Focus</h3>
+<!-- Logged Habit (Completed State) -->
+<div class="group bg-tertiary-fixed text-on-tertiary-fixed rounded-2xl p-lg flex items-center justify-between shadow-sm transition-all duration-300 relative overflow-hidden">
+<div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-12 h-12 rounded-full bg-white/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="water_drop">water_drop</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-[18px] mb-1">Hydration</h4>
+<p class="font-body-md text-body-md text-[14px] opacity-80">Drink 2L of water</p>
+</div>
+</div>
+<div class="flex items-center gap-3 relative z-10">
+<span class="font-label-caps text-label-caps opacity-90 hidden sm:block">Completed 9:00 AM</span>
+<div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-tertiary shadow-sm">
+<span class="material-symbols-outlined fill" data-icon="check_circle">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Unlogged Habit 1 (Interactive) -->
+<div class="group bg-surface rounded-2xl p-lg flex items-center justify-between shadow-sm border border-outline-variant/10 hover:shadow-md transition-all duration-300 relative overflow-hidden" id="habit-card-1">
+<!-- Background layer for checked state -->
+<div class="absolute inset-0 bg-tertiary-fixed opacity-0 transition-opacity duration-300" id="habit-bg-1"></div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface transition-colors duration-300" id="icon-container-1">
+<span class="material-symbols-outlined" data-icon="self_improvement">self_improvement</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-[18px] text-on-surface mb-1 transition-colors duration-300" id="title-1">Mindful Meditation</h4>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant transition-colors duration-300" id="desc-1">15 minutes focus</p>
+</div>
+</div>
+<div class="relative z-10">
+<button class="bg-primary text-on-primary rounded-full px-6 py-3 font-label-caps text-label-caps flex items-center gap-2 hover:bg-primary/90 transition-all active:scale-95 shadow-sm" id="btn-1" onclick="logHabit(1)">
+<span class="material-symbols-outlined text-[18px]" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+                            Log
+                        </button>
+</div>
+</div>
+<!-- Unlogged Habit 2 (Interactive) -->
+<div class="group bg-surface rounded-2xl p-lg flex items-center justify-between shadow-sm border border-outline-variant/10 hover:shadow-md transition-all duration-300 relative overflow-hidden" id="habit-card-2">
+<div class="absolute inset-0 bg-tertiary-fixed opacity-0 transition-opacity duration-300" id="habit-bg-2"></div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface transition-colors duration-300" id="icon-container-2">
+<span class="material-symbols-outlined" data-icon="directions_run">directions_run</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-[18px] text-on-surface mb-1 transition-colors duration-300" id="title-2">Deep Work Block</h4>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant transition-colors duration-300" id="desc-2">90 minutes uninterrupted</p>
+</div>
+</div>
+<div class="relative z-10">
+<button class="bg-primary text-on-primary rounded-full px-6 py-3 font-label-caps text-label-caps flex items-center gap-2 hover:bg-primary/90 transition-all active:scale-95 shadow-sm" id="btn-2" onclick="logHabit(2)">
+<span class="material-symbols-outlined text-[18px]" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+                            Log
+                        </button>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- BottomNavBar (Mobile) -->
+<nav class="bg-surface/80 dark:bg-on-background/80 backdrop-blur-xl border-t border-outline-variant/10 docked bottom-0 w-full md:hidden rounded-t-xl fixed z-50 flex justify-around items-center px-4 py-2 pb-safe shadow-lg">
+<!-- Active: Home -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed bg-primary-container/20 dark:bg-primary-container/10 rounded-xl px-4 py-1 scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined fill" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-1 text-[10px]">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="list">list</span>
+<span class="font-label-caps text-label-caps mt-1 text-[10px]">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="spark">spark</span>
+<span class="font-label-caps text-label-caps mt-1 text-[10px]">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps mt-1 text-[10px]">Profile</span>
+</a>
+</nav>
+<!-- Interactive Script for Habit Checking -->
+<script>
+        function logHabit(id) {
+            const card = document.getElementById(`habit-card-${id}`);
+            const bg = document.getElementById(`habit-bg-${id}`);
+            const btn = document.getElementById(`btn-${id}`);
+            const title = document.getElementById(`title-${id}`);
+            const desc = document.getElementById(`desc-${id}`);
+            const iconContainer = document.getElementById(`icon-container-${id}`);
+
+            // If already logged, don't do anything for this demo
+            if (bg.classList.contains('opacity-100')) return;
+
+            // Trigger animation
+            card.classList.add('habit-logged');
+            
+            // Fade in green background
+            bg.classList.remove('opacity-0');
+            bg.classList.add('opacity-100');
+
+            // Update text colors to match logged state (on-tertiary-fixed)
+            title.classList.remove('text-on-surface');
+            title.classList.add('text-on-tertiary-fixed');
+            
+            desc.classList.remove('text-on-surface-variant');
+            desc.classList.add('text-on-tertiary-fixed', 'opacity-80');
+
+            iconContainer.classList.remove('bg-surface-container-high', 'text-on-surface');
+            iconContainer.classList.add('bg-white/30', 'text-tertiary');
+
+            // Transform button to checkmark
+            btn.className = "w-12 h-12 rounded-full bg-white flex items-center justify-center text-tertiary shadow-sm transition-all duration-300 scale-in";
+            btn.innerHTML = `<span class="material-symbols-outlined fill" data-icon="check_circle">check_circle</span>`;
+
+            // Remove animation class after it completes so it could theoretically run again
+            setTimeout(() => {
+                card.classList.remove('habit-logged');
+            }, 400);
+        }
+    </script>
+</body></html>

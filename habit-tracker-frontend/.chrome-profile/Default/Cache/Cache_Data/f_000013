@@ -1,0 +1,533 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/components/StreakCalendar.jsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=3ef80c3a"; const Fragment = __vite__cjsImport0_react_jsxDevRuntime["Fragment"]; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+var _s = $RefreshSig$();
+import __vite__cjsImport1_react from "/node_modules/.vite/deps/react.js?v=3ef80c3a"; const useMemo = __vite__cjsImport1_react["useMemo"]; const useState = __vite__cjsImport1_react["useState"];
+function toISODate(d) {
+  return d.toISOString().slice(0, 10);
+}
+function startOfWeekMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function clamp(n, a, b) {
+  return Math.max(a, Math.min(b, n));
+}
+function intensity(progress) {
+  const p = clamp(Number(progress || 0), 0, 100);
+  if (p === 0) return 0;
+  if (p < 25) return 1;
+  if (p < 50) return 2;
+  if (p < 75) return 3;
+  return 4;
+}
+const LEVELS = [
+  "bg-white/5 ring-white/10",
+  "bg-cyan-400/25 ring-cyan-300/25",
+  "bg-cyan-400/45 ring-cyan-300/30",
+  "bg-fuchsia-400/55 ring-fuchsia-300/35",
+  "bg-indigo-400/70 ring-indigo-300/40"
+];
+const RANGE_OPTIONS = [
+  { key: "7d", label: "Last 7 days", days: 7 },
+  { key: "30d", label: "Last 30 days", days: 30 },
+  { key: "12w", label: "Last 12 weeks", days: 7 * 12 },
+  { key: "6m", label: "Last 6 months", days: 30 * 6 }
+  // approximate
+];
+export default function StreakCalendar({ habits }) {
+  _s();
+  const [hover, setHover] = useState(null);
+  const [range, setRange] = useState("12w");
+  const [showMode, setShowMode] = useState("all");
+  const [metric, setMetric] = useState("max");
+  const [dayFilter, setDayFilter] = useState("all");
+  const [heatMode, setHeatMode] = useState("progress");
+  const dayMap = useMemo(() => {
+    const totals = /* @__PURE__ */ new Map();
+    for (const h of habits || []) {
+      const iso = h?.date;
+      if (!iso) continue;
+      const p = clamp(Number(h?.progress || 0), 0, 100);
+      const cur = totals.get(iso) || { sum: 0, count: 0, max: 0 };
+      cur.sum += p;
+      cur.count += 1;
+      cur.max = Math.max(cur.max, p);
+      totals.set(iso, cur);
+    }
+    const map = /* @__PURE__ */ new Map();
+    for (const [iso, agg] of totals.entries()) {
+      if (heatMode === "count") {
+        const scaled = clamp(agg.count * 25, 0, 100);
+        map.set(iso, scaled);
+      } else {
+        const val = metric === "avg" ? Math.round(agg.sum / agg.count) : agg.max;
+        map.set(iso, val);
+      }
+    }
+    return { map, totals };
+  }, [habits, metric, heatMode]);
+  const { weeks, labels, totalDays } = useMemo(() => {
+    const opt = RANGE_OPTIONS.find((o) => o.key === range) || RANGE_OPTIONS[2];
+    const days = opt.days;
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = today;
+    const start = new Date(today);
+    start.setDate(start.getDate() - (days - 1));
+    start.setHours(0, 0, 0, 0);
+    const weekStart = startOfWeekMonday(start);
+    const numWeeks = Math.ceil(days / 7);
+    const total = numWeeks * 7;
+    const cells = [];
+    for (let i = 0; i < total; i++) {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      const iso = toISODate(d);
+      const prog = dayMap.map.get(iso) ?? 0;
+      let filteredProg = prog;
+      const dow = d.getDay();
+      const isWeekend = dow === 0 || dow === 6;
+      if (dayFilter === "weekdays" && isWeekend) filteredProg = 0;
+      if (dayFilter === "weekends" && !isWeekend) filteredProg = 0;
+      if (showMode === "completed") {
+        filteredProg = filteredProg >= 80 ? filteredProg : 0;
+      } else if (showMode === "struggling") {
+        filteredProg = filteredProg > 0 && filteredProg <= 30 ? filteredProg : 0;
+      }
+      cells.push({ date: d, iso, prog, filteredProg, lvl: intensity(filteredProg) });
+    }
+    const w = [];
+    for (let i = 0; i < numWeeks; i++) {
+      w.push(cells.slice(i * 7, i * 7 + 7));
+    }
+    const monthLabels = w.map((col) => {
+      const top = col[0]?.date;
+      if (!top) return "";
+      return top.getDate() <= 7 ? top.toLocaleString(void 0, { month: "short" }) : "";
+    });
+    return { weeks: w, labels: monthLabels, totalDays: total };
+  }, [dayMap, range, showMode, dayFilter]);
+  const legendLabel = useMemo(() => {
+    if (showMode === "completed") return "Completed only (≥80%)";
+    if (showMode === "struggling") return "Struggling only (≤30%)";
+    return "All activity";
+  }, [showMode]);
+  return /* @__PURE__ */ jsxDEV("div", { className: "rounded-3xl bg-white/5 p-6 ring-1 ring-white/10", children: [
+    /* @__PURE__ */ jsxDEV("div", { className: "flex flex-col gap-4 md:flex-row md:items-end md:justify-between", children: [
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("div", { className: "text-lg font-semibold", children: "Streak Calendar" }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 159,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("div", { className: "mt-1 text-sm text-white/55", children: [
+          legendLabel,
+          " • ",
+          heatMode === "count" ? "Count/day" : metric === "avg" ? "Avg/day" : "Max/day",
+          " •",
+          " ",
+          dayFilter === "all" ? "All days" : dayFilter === "weekdays" ? "Weekdays" : "Weekends",
+          " • ",
+          range.toUpperCase()
+        ] }, void 0, true, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 160,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 158,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { className: "flex flex-wrap items-center gap-3", children: [
+        /* @__PURE__ */ jsxDEV(
+          Segmented,
+          {
+            label: "Range",
+            value: range,
+            onChange: setRange,
+            options: [
+              { value: "7d", label: "7D" },
+              { value: "30d", label: "30D" },
+              { value: "12w", label: "12W" },
+              { value: "6m", label: "6M" }
+            ]
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 169,
+            columnNumber: 11
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          PillSelect,
+          {
+            label: "Show",
+            value: showMode,
+            onChange: setShowMode,
+            options: [
+              { value: "all", label: "All" },
+              { value: "completed", label: "Completed" },
+              { value: "struggling", label: "Struggling" }
+            ]
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 182,
+            columnNumber: 11
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          PillSelect,
+          {
+            label: "Metric",
+            value: metric,
+            onChange: setMetric,
+            options: [
+              { value: "max", label: "Max/day" },
+              { value: "avg", label: "Avg/day" }
+            ]
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 194,
+            columnNumber: 11
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          PillSelect,
+          {
+            label: "Days",
+            value: dayFilter,
+            onChange: setDayFilter,
+            options: [
+              { value: "all", label: "All" },
+              { value: "weekdays", label: "Weekdays" },
+              { value: "weekends", label: "Weekends" }
+            ]
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 204,
+            columnNumber: 11
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          PillSelect,
+          {
+            label: "Heat",
+            value: heatMode,
+            onChange: setHeatMode,
+            options: [
+              { value: "progress", label: "Progress" },
+              { value: "count", label: "Count" }
+            ]
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 215,
+            columnNumber: 11
+          },
+          this
+        )
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 167,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+      lineNumber: 157,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV("div", { className: "mt-4 flex items-center justify-between gap-4 text-xs text-white/50", children: [
+      /* @__PURE__ */ jsxDEV("div", { children: `Rendering ${totalDays} days (whole weeks)` }, void 0, false, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 228,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Less" }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 230,
+          columnNumber: 11
+        }, this),
+        [0, 1, 2, 3, 4].map(
+          (i) => /* @__PURE__ */ jsxDEV("span", { className: `h-3 w-3 rounded-sm ring-1 ${LEVELS[i]}` }, i, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 232,
+            columnNumber: 11
+          }, this)
+        ),
+        /* @__PURE__ */ jsxDEV("span", { children: "More" }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 234,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 229,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+      lineNumber: 227,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV("div", { className: "mt-5 overflow-x-auto", children: /* @__PURE__ */ jsxDEV("div", { className: "min-w-[720px]", children: [
+      /* @__PURE__ */ jsxDEV("div", { className: "mb-2 grid gap-2 text-xs text-white/40", style: { gridTemplateColumns: `28px repeat(${weeks.length}, 1fr)` }, children: [
+        /* @__PURE__ */ jsxDEV("div", {}, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 242,
+          columnNumber: 13
+        }, this),
+        labels.map(
+          (m, i) => /* @__PURE__ */ jsxDEV("div", { className: "pl-1", children: m }, i, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 244,
+            columnNumber: 13
+          }, this)
+        )
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 241,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { className: "grid gap-2", style: { gridTemplateColumns: `28px repeat(${weeks.length}, 1fr)` }, children: [
+        /* @__PURE__ */ jsxDEV("div", { className: "grid grid-rows-7 gap-2 text-xs text-white/40", children: ["Mon", "", "Wed", "", "Fri", "", "Sun"].map(
+          (d, i) => /* @__PURE__ */ jsxDEV("div", { className: "h-4 leading-4", children: d }, i, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 253,
+            columnNumber: 15
+          }, this)
+        ) }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 251,
+          columnNumber: 13
+        }, this),
+        weeks.map(
+          (col, cIdx) => /* @__PURE__ */ jsxDEV("div", { className: "grid grid-rows-7 gap-2", children: col.map(
+            (cell, rIdx) => /* @__PURE__ */ jsxDEV(
+              "button",
+              {
+                type: "button",
+                onMouseEnter: () => setHover(cell),
+                onMouseLeave: () => setHover(null),
+                className: `h-4 w-4 rounded-[4px] ring-1 transition ${LEVELS[cell.lvl]} hover:scale-110`,
+                title: `${cell.iso} • ${cell.prog}%`
+              },
+              rIdx,
+              false,
+              {
+                fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+                lineNumber: 260,
+                columnNumber: 15
+              },
+              this
+            )
+          ) }, cIdx, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 258,
+            columnNumber: 13
+          }, this)
+        )
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 249,
+        columnNumber: 11
+      }, this),
+      hover ? /* @__PURE__ */ jsxDEV("div", { className: "mt-4 rounded-2xl bg-black/40 p-3 text-sm text-white/70 ring-1 ring-white/10", children: [
+        /* @__PURE__ */ jsxDEV("span", { className: "font-semibold text-white", children: hover.iso }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 276,
+          columnNumber: 15
+        }, this),
+        " ",
+        "—",
+        " ",
+        heatMode === "count" ? /* @__PURE__ */ jsxDEV(Fragment, { children: [
+          "entries ",
+          /* @__PURE__ */ jsxDEV("span", { className: "font-semibold text-white", children: Math.round((hover.prog || 0) / 25) }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 280,
+            columnNumber: 27
+          }, this),
+          /* @__PURE__ */ jsxDEV("span", { className: "text-white/45", children: " (1→25, 2→50, 3→75, 4+→100)" }, void 0, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 281,
+            columnNumber: 19
+          }, this)
+        ] }, void 0, true, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 279,
+          columnNumber: 13
+        }, this) : /* @__PURE__ */ jsxDEV(Fragment, { children: [
+          "activity ",
+          /* @__PURE__ */ jsxDEV("span", { className: "font-semibold text-white", children: [
+            hover.prog,
+            "%"
+          ] }, void 0, true, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 285,
+            columnNumber: 28
+          }, this)
+        ] }, void 0, true, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 284,
+          columnNumber: 13
+        }, this),
+        showMode !== "all" || dayFilter !== "all" ? /* @__PURE__ */ jsxDEV("span", { className: "text-white/45", children: " (filtered)" }, void 0, false, {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 289,
+          columnNumber: 13
+        }, this) : null
+      ] }, void 0, true, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 275,
+        columnNumber: 11
+      }, this) : /* @__PURE__ */ jsxDEV("div", { className: "mt-4 text-sm text-white/45", children: "Hover a day to see details." }, void 0, false, {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 293,
+        columnNumber: 11
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+      lineNumber: 239,
+      columnNumber: 9
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+      lineNumber: 238,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+    lineNumber: 156,
+    columnNumber: 5
+  }, this);
+}
+_s(StreakCalendar, "GGv0/3KhZbP8okchQKeUjWv8aSk=");
+_c = StreakCalendar;
+function Segmented({ label, value, onChange, options }) {
+  return /* @__PURE__ */ jsxDEV("div", { className: "flex items-center gap-2", children: [
+    /* @__PURE__ */ jsxDEV("span", { className: "text-xs text-white/50", children: label }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+      lineNumber: 304,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV("div", { className: "inline-flex rounded-2xl bg-white/10 p-1 ring-1 ring-white/15 backdrop-blur", children: options.map((opt) => {
+      const active = opt.value === value;
+      return /* @__PURE__ */ jsxDEV(
+        "button",
+        {
+          type: "button",
+          onClick: () => onChange(opt.value),
+          className: [
+            "rounded-xl px-3 py-1 text-xs transition",
+            active ? "bg-white text-black shadow" : "text-white/70 hover:text-white hover:bg-white/10"
+          ].join(" "),
+          children: opt.label
+        },
+        opt.value,
+        false,
+        {
+          fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+          lineNumber: 310,
+          columnNumber: 13
+        },
+        this
+      );
+    }) }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+      lineNumber: 306,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+    lineNumber: 303,
+    columnNumber: 5
+  }, this);
+}
+_c2 = Segmented;
+function PillSelect({ label, value, onChange, options }) {
+  return /* @__PURE__ */ jsxDEV("label", { className: "flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 ring-1 ring-white/15 backdrop-blur", children: [
+    /* @__PURE__ */ jsxDEV("span", { className: "text-xs text-white/50", children: label }, void 0, false, {
+      fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+      lineNumber: 333,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(
+      "select",
+      {
+        className: "rounded-xl bg-white px-3 py-1 text-sm text-black outline-none",
+        value,
+        onChange: (e) => onChange(e.target.value),
+        children: options.map(
+          (o) => /* @__PURE__ */ jsxDEV("option", { value: o.value, children: o.label }, o.value, false, {
+            fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+            lineNumber: 341,
+            columnNumber: 9
+          }, this)
+        )
+      },
+      void 0,
+      false,
+      {
+        fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+        lineNumber: 335,
+        columnNumber: 7
+      },
+      this
+    )
+  ] }, void 0, true, {
+    fileName: "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx",
+    lineNumber: 332,
+    columnNumber: 5
+  }, this);
+}
+_c3 = PillSelect;
+var _c, _c2, _c3;
+$RefreshReg$(_c, "StreakCalendar");
+$RefreshReg$(_c2, "Segmented");
+$RefreshReg$(_c3, "PillSelect");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) {
+  return RefreshRuntime.register(type, "C:/Users/Administrator/Desktop/work/walidd/habit-tracker/habit-tracker-frontend/src/components/StreakCalendar.jsx " + id);
+}
+function $RefreshSig$() {
+  return RefreshRuntime.createSignatureFunctionForTransform();
+}
+
+//# sourceMappingURL=data:application/json;base64,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QTtBQUFBLFFBQ0Q7QUFBQTtBQUFBLE1BVEg7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBLElBVUE7QUFBQSxPQWJGO0FBQUE7QUFBQTtBQUFBO0FBQUEsU0FjQTtBQUVKO0FBQUNnQixNQWxCUUg7QUFBVSxJQUFBSSxJQUFBTCxLQUFBSTtBQUFBLGFBQUFDLElBQUE7QUFBQSxhQUFBTCxLQUFBO0FBQUEsYUFBQUksS0FBQSIsIm5hbWVzIjpbInVzZU1lbW8iLCJ1c2VTdGF0ZSIsInRvSVNPRGF0ZSIsImQiLCJ0b0lTT1N0cmluZyIsInNsaWNlIiwic3RhcnRPZldlZWtNb25kYXkiLCJkYXRlIiwiRGF0ZSIsImRheSIsImdldERheSIsImRpZmYiLCJzZXREYXRlIiwiZ2V0RGF0ZSIsInNldEhvdXJzIiwiY2xhbXAiLCJuIiwiYSIsImIiLCJNYXRoIiwibWF4IiwibWluIiwiaW50ZW5zaXR5IiwicHJvZ3Jlc3MiLCJwIiwiTnVtYmVyIiwiTEVWRUxTIiwiUkFOR0VfT1BUSU9OUyIsImtleSIsImxhYmVsIiwiZGF5cyIsIlN0cmVha0NhbGVuZGFyIiwiaGFiaXRzIiwiX3MiLCJob3ZlciIsInNldEhvdmVyIiwicmFuZ2UiLCJzZXRSYW5nZSIsInNob3dNb2RlIiwic2V0U2hvd01vZGUiLCJtZXRyaWMiLCJzZXRNZXRyaWMiLCJkYXlGaWx0ZXIiLCJzZXREYXlGaWx0ZXIiLCJoZWF0TW9kZSIsInNldEhlYXRNb2RlIiwiZGF5TWFwIiwidG90YWxzIiwiTWFwIiwiaCIsImlzbyIsImN1ciIsImdldCIsInN1bSIsImNvdW50Iiwic2V0IiwibWFwIiwiYWdnIiwiZW50cmllcyIsInNjYWxlZCIsInZhbCIsInJvdW5kIiwid2Vla3MiLCJsYWJlbHMiLCJ0b3RhbERheXMiLCJvcHQiLCJmaW5kIiwibyIsInRvZGF5IiwiZW5kIiwic3RhcnQiLCJ3ZWVrU3RhcnQiLCJudW1XZWVrcyIsImNlaWwiLCJ0b3RhbCIsImNlbGxzIiwiaSIsInByb2ciLCJmaWx0ZXJlZFByb2ciLCJkb3ciLCJpc1dlZWtlbmQiLCJwdXNoIiwibHZsIiwidyIsIm1vbnRoTGFiZWxzIiwiY29sIiwidG9wIiwidG9Mb2NhbGVTdHJpbmciLCJ1bmRlZmluZWQiLCJtb250aCIsImxlZ2VuZExhYmVsIiwidG9VcHBlckNhc2UiLCJ2YWx1ZSIsImdyaWRUZW1wbGF0ZUNvbHVtbnMiLCJsZW5ndGgiLCJtIiwiY0lkeCIsImNlbGwiLCJySWR4IiwiU2VnbWVudGVkIiwib25DaGFuZ2UiLCJvcHRpb25zIiwiYWN0aXZlIiwiam9pbiIsIl9jMiIsIlBpbGxTZWxlY3QiLCJlIiwidGFyZ2V0IiwiX2MzIiwiX2MiXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiU3RyZWFrQ2FsZW5kYXIuanN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IHVzZU1lbW8sIHVzZVN0YXRlIH0gZnJvbSBcInJlYWN0XCI7XHJcblxyXG5mdW5jdGlvbiB0b0lTT0RhdGUoZCkge1xyXG4gIHJldHVybiBkLnRvSVNPU3RyaW5nKCkuc2xpY2UoMCwgMTApO1xyXG59XHJcblxyXG5mdW5jdGlvbiBzdGFydE9mV2Vla01vbmRheShkYXRlKSB7XHJcbiAgY29uc3QgZCA9IG5ldyBEYXRlKGRhdGUpO1xyXG4gIGNvbnN0IGRheSA9IGQuZ2V0RGF5KCk7IC8vIDAgU3VuIC4uLiA2IFNhdFxyXG4gIGNvbnN0IGRpZmYgPSAoZGF5ID09PSAwID8gLTYgOiAxKSAtIGRheTsgLy8gc2hpZnQgdG8gTW9uZGF5XHJcbiAgZC5zZXREYXRlKGQuZ2V0RGF0ZSgpICsgZGlmZik7XHJcbiAgZC5zZXRIb3VycygwLCAwLCAwLCAwKTtcclxuICByZXR1cm4gZDtcclxufVxyXG5cclxuZnVuY3Rpb24gY2xhbXAobiwgYSwgYikge1xyXG4gIHJldHVybiBNYXRoLm1heChhLCBNYXRoLm1pbihiLCBuKSk7XHJcbn1cclxuXHJcbmZ1bmN0aW9uIGludGVuc2l0eShwcm9ncmVzcykge1xyXG4gIGNvbnN0IHAgPSBjbGFtcChOdW1iZXIocHJvZ3Jlc3MgfHwgMCksIDAsIDEwMCk7XHJcbiAgaWYgKHAgPT09IDApIHJldHVybiAwO1xyXG4gIGlmIChwIDwgMjUpIHJldHVybiAxO1xyXG4gIGlmIChwIDwgNTApIHJldHVybiAyO1xyXG4gIGlmIChwIDwgNzUpIHJldHVybiAzO1xyXG4gIHJldHVybiA0O1xyXG59XHJcblxyXG5jb25zdCBMRVZFTFMgPSBbXHJcbiAgXCJiZy13aGl0ZS81IHJpbmctd2hpdGUvMTBcIixcclxuICBcImJnLWN5YW4tNDAwLzI1IHJpbmctY3lhbi0zMDAvMjVcIixcclxuICBcImJnLWN5YW4tNDAwLzQ1IHJpbmctY3lhbi0zMDAvMzBcIixcclxuICBcImJnLWZ1Y2hzaWEtNDAwLzU1IHJpbmctZnVjaHNpYS0zMDAvMzVcIixcclxuICBcImJnLWluZGlnby00MDAvNzAgcmluZy1pbmRpZ28tMzAwLzQwXCIsXHJcbl07XHJcblxyXG5jb25zdCBSQU5HRV9PUFRJT05TID0gW1xyXG4gIHsga2V5OiBcIjdkXCIsIGxhYmVsOiBcIkxhc3QgNyBkYXlzXCIsIGRheXM6IDcgfSxcclxuICB7IGtleTogXCIzMGRcIiwgbGFiZWw6IFwiTGFzdCAzMCBkYXlzXCIsIGRheXM6IDMwIH0sXHJcbiAgeyBrZXk6IFwiMTJ3XCIsIGxhYmVsOiBcIkxhc3QgMTIgd2Vla3NcIiwgZGF5czogNyAqIDEyIH0sXHJcbiAgeyBrZXk6IFwiNm1cIiwgbGFiZWw6IFwiTGFzdCA2IG1vbnRoc1wiLCBkYXlzOiAzMCAqIDYgfSwgLy8gYXBwcm94aW1hdGVcclxuXTtcclxuXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIFN0cmVha0NhbGVuZGFyKHsgaGFiaXRzIH0pIHtcclxuICBjb25zdCBbaG92ZXIsIHNldEhvdmVyXSA9IHVzZVN0YXRlKG51bGwpO1xyXG5cclxuICBjb25zdCBbcmFuZ2UsIHNldFJhbmdlXSA9IHVzZVN0YXRlKFwiMTJ3XCIpO1xyXG4gIGNvbnN0IFtzaG93TW9kZSwgc2V0U2hvd01vZGVdID0gdXNlU3RhdGUoXCJhbGxcIik7IC8vIGFsbCB8IGNvbXBsZXRlZCB8IHN0cnVnZ2xpbmdcclxuICBjb25zdCBbbWV0cmljLCBzZXRNZXRyaWNdID0gdXNlU3RhdGUoXCJtYXhcIik7IC8vIG1heCB8IGF2Z1xyXG5cclxuICBjb25zdCBbZGF5RmlsdGVyLCBzZXREYXlGaWx0ZXJdID0gdXNlU3RhdGUoXCJhbGxcIik7IC8vIGFsbCB8IHdlZWtkYXlzIHwgd2Vla2VuZHNcclxuICBjb25zdCBbaGVhdE1vZGUsIHNldEhlYXRNb2RlXSA9IHVzZVN0YXRlKFwicHJvZ3Jlc3NcIik7IC8vIHByb2dyZXNzIHwgY291bnRcclxuXHJcbiAgY29uc3QgZGF5TWFwID0gdXNlTWVtbygoKSA9PiB7XHJcbiAgICAvLyBXZSBjb21wdXRlIEJPVEg6XHJcbiAgICAvLyAtIHByb2dyZXNzVmFsdWUgcGVyIGRheSAobWF4IG9yIGF2ZylcclxuICAgIC8vIC0gY291bnQgcGVyIGRheSAobnVtYmVyIG9mIGhhYml0IGVudHJpZXMgdGhhdCBkYXkpXHJcbiAgICBjb25zdCB0b3RhbHMgPSBuZXcgTWFwKCk7IC8vIGlzbyAtPiB7c3VtLCBjb3VudCwgbWF4fVxyXG5cclxuICAgIGZvciAoY29uc3QgaCBvZiBoYWJpdHMgfHwgW10pIHtcclxuICAgICAgY29uc3QgaXNvID0gaD8uZGF0ZTtcclxuICAgICAgaWYgKCFpc28pIGNvbnRpbnVlO1xyXG5cclxuICAgICAgY29uc3QgcCA9IGNsYW1wKE51bWJlcihoPy5wcm9ncmVzcyB8fCAwKSwgMCwgMTAwKTtcclxuXHJcbiAgICAgIGNvbnN0IGN1ciA9IHRvdGFscy5nZXQoaXNvKSB8fCB7IHN1bTogMCwgY291bnQ6IDAsIG1heDogMCB9O1xyXG4gICAgICBjdXIuc3VtICs9IHA7XHJcbiAgICAgIGN1ci5jb3VudCArPSAxO1xyXG4gICAgICBjdXIubWF4ID0gTWF0aC5tYXgoY3VyLm1heCwgcCk7XHJcbiAgICAgIHRvdGFscy5zZXQoaXNvLCBjdXIpO1xyXG4gICAgfVxyXG5cclxuICAgIGNvbnN0IG1hcCA9IG5ldyBNYXAoKTsgLy8gaXNvIC0+IHZhbHVlIHVzZWQgZm9yIGNvbG9yaW5nXHJcblxyXG4gICAgZm9yIChjb25zdCBbaXNvLCBhZ2ddIG9mIHRvdGFscy5lbnRyaWVzKCkpIHtcclxuICAgICAgaWYgKGhlYXRNb2RlID09PSBcImNvdW50XCIpIHtcclxuICAgICAgICAvLyBjbGFtcCBjb3VudCBpbnRvIGEgMC4uMTAwIHNjYWxlIGZvciBpbnRlbnNpdHkgbWFwcGluZ1xyXG4gICAgICAgIC8vIDEgaGFiaXQgPT4gMjUsIDIgPT4gNTAsIDMgPT4gNzUsIDQrID0+IDEwMFxyXG4gICAgICAgIGNvbnN0IHNjYWxlZCA9IGNsYW1wKGFnZy5jb3VudCAqIDI1LCAwLCAxMDApO1xyXG4gICAgICAgIG1hcC5zZXQoaXNvLCBzY2FsZWQpO1xyXG4gICAgICB9IGVsc2Uge1xyXG4gICAgICAgIGNvbnN0IHZhbCA9IG1ldHJpYyA9PT0gXCJhdmdcIiA/IE1hdGgucm91bmQoYWdnLnN1bSAvIGFnZy5jb3VudCkgOiBhZ2cubWF4O1xyXG4gICAgICAgIG1hcC5zZXQoaXNvLCB2YWwpO1xyXG4gICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgcmV0dXJuIHsgbWFwLCB0b3RhbHMgfTtcclxuICB9LCBbaGFiaXRzLCBtZXRyaWMsIGhlYXRNb2RlXSk7XHJcblxyXG4gIGNvbnN0IHsgd2Vla3MsIGxhYmVscywgdG90YWxEYXlzIH0gPSB1c2VNZW1vKCgpID0+IHtcclxuICAgIGNvbnN0IG9wdCA9IFJBTkdFX09QVElPTlMuZmluZCgobykgPT4gby5rZXkgPT09IHJhbmdlKSB8fCBSQU5HRV9PUFRJT05TWzJdO1xyXG4gICAgY29uc3QgZGF5cyA9IG9wdC5kYXlzO1xyXG5cclxuICAgIGNvbnN0IHRvZGF5ID0gbmV3IERhdGUoKTtcclxuICAgIHRvZGF5LnNldEhvdXJzKDAsIDAsIDAsIDApO1xyXG5cclxuICAgIC8vIFdlIHJlbmRlciB3aG9sZSB3ZWVrcyB0byBrZWVwIHRoZSBncmlkIGNsZWFuXHJcbiAgICBjb25zdCBlbmQgPSB0b2RheTtcclxuICAgIGNvbnN0IHN0YXJ0ID0gbmV3IERhdGUodG9kYXkpO1xyXG4gICAgc3RhcnQuc2V0RGF0ZShzdGFydC5nZXREYXRlKCkgLSAoZGF5cyAtIDEpKTtcclxuICAgIHN0YXJ0LnNldEhvdXJzKDAsIDAsIDAsIDApO1xyXG5cclxuICAgIGNvbnN0IHdlZWtTdGFydCA9IHN0YXJ0T2ZXZWVrTW9uZGF5KHN0YXJ0KTtcclxuXHJcbiAgICAvLyBudW1iZXIgb2Ygd2Vla3MgPSBjZWlsKGRheXMgLyA3KSBidXQgd2UgcmVuZGVyIHdob2xlIHdlZWtzXHJcbiAgICBjb25zdCBudW1XZWVrcyA9IE1hdGguY2VpbChkYXlzIC8gNyk7XHJcbiAgICBjb25zdCB0b3RhbCA9IG51bVdlZWtzICogNztcclxuXHJcbiAgICBjb25zdCBjZWxscyA9IFtdO1xyXG4gICAgZm9yIChsZXQgaSA9IDA7IGkgPCB0b3RhbDsgaSsrKSB7XHJcbiAgICAgIGNvbnN0IGQgPSBuZXcgRGF0ZSh3ZWVrU3RhcnQpO1xyXG4gICAgICBkLnNldERhdGUoZC5nZXREYXRlKCkgKyBpKTtcclxuXHJcbiAgICAgIGNvbnN0IGlzbyA9IHRvSVNPRGF0ZShkKTtcclxuICAgICAgY29uc3QgcHJvZyA9IGRheU1hcC5tYXAuZ2V0KGlzbykgPz8gMDtcclxuXHJcbiAgICAgIGxldCBmaWx0ZXJlZFByb2cgPSBwcm9nO1xyXG4gICAgICAvLyBXZWVrZGF5IGZpbHRlclxyXG4gICAgICBjb25zdCBkb3cgPSBkLmdldERheSgpOyAvLyAwIFN1biAuLi4gNiBTYXRcclxuICAgICAgY29uc3QgaXNXZWVrZW5kID0gZG93ID09PSAwIHx8IGRvdyA9PT0gNjtcclxuXHJcbiAgICAgIGlmIChkYXlGaWx0ZXIgPT09IFwid2Vla2RheXNcIiAmJiBpc1dlZWtlbmQpIGZpbHRlcmVkUHJvZyA9IDA7XHJcbiAgICAgIGlmIChkYXlGaWx0ZXIgPT09IFwid2Vla2VuZHNcIiAmJiAhaXNXZWVrZW5kKSBmaWx0ZXJlZFByb2cgPSAwO1xyXG5cclxuICAgICAgLy8gU2hvdy1tb2RlIGZpbHRlciAoYmFzZWQgb24gZmlsdGVyZWRQcm9nIGFmdGVyIHdlZWtkYXkgZmlsdGVyKVxyXG4gICAgICBpZiAoc2hvd01vZGUgPT09IFwiY29tcGxldGVkXCIpIHtcclxuICAgICAgICBmaWx0ZXJlZFByb2cgPSBmaWx0ZXJlZFByb2cgPj0gODAgPyBmaWx0ZXJlZFByb2cgOiAwO1xyXG4gICAgICB9IGVsc2UgaWYgKHNob3dNb2RlID09PSBcInN0cnVnZ2xpbmdcIikge1xyXG4gICAgICAgIGZpbHRlcmVkUHJvZyA9IGZpbHRlcmVkUHJvZyA+IDAgJiYgZmlsdGVyZWRQcm9nIDw9IDMwID8gZmlsdGVyZWRQcm9nIDogMDtcclxuICAgICAgfVxyXG5cclxuICAgICAgY2VsbHMucHVzaCh7IGRhdGU6IGQsIGlzbywgcHJvZywgZmlsdGVyZWRQcm9nLCBsdmw6IGludGVuc2l0eShmaWx0ZXJlZFByb2cpIH0pO1xyXG4gICAgfVxyXG5cclxuICAgIGNvbnN0IHcgPSBbXTtcclxuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbnVtV2Vla3M7IGkrKykge1xyXG4gICAgICB3LnB1c2goY2VsbHMuc2xpY2UoaSAqIDcsIGkgKiA3ICsgNykpO1xyXG4gICAgfVxyXG5cclxuICAgIGNvbnN0IG1vbnRoTGFiZWxzID0gdy5tYXAoKGNvbCkgPT4ge1xyXG4gICAgICBjb25zdCB0b3AgPSBjb2xbMF0/LmRhdGU7XHJcbiAgICAgIGlmICghdG9wKSByZXR1cm4gXCJcIjtcclxuICAgICAgcmV0dXJuIHRvcC5nZXREYXRlKCkgPD0gNyA/IHRvcC50b0xvY2FsZVN0cmluZyh1bmRlZmluZWQsIHsgbW9udGg6IFwic2hvcnRcIiB9KSA6IFwiXCI7XHJcbiAgICB9KTtcclxuXHJcbiAgICByZXR1cm4geyB3ZWVrczogdywgbGFiZWxzOiBtb250aExhYmVscywgdG90YWxEYXlzOiB0b3RhbCB9O1xyXG4gIH0sIFtkYXlNYXAsIHJhbmdlLCBzaG93TW9kZSwgZGF5RmlsdGVyXSk7XHJcblxyXG4gIGNvbnN0IGxlZ2VuZExhYmVsID0gdXNlTWVtbygoKSA9PiB7XHJcbiAgICBpZiAoc2hvd01vZGUgPT09IFwiY29tcGxldGVkXCIpIHJldHVybiBcIkNvbXBsZXRlZCBvbmx5ICjiiaU4MCUpXCI7XHJcbiAgICBpZiAoc2hvd01vZGUgPT09IFwic3RydWdnbGluZ1wiKSByZXR1cm4gXCJTdHJ1Z2dsaW5nIG9ubHkgKOKJpDMwJSlcIjtcclxuICAgIHJldHVybiBcIkFsbCBhY3Rpdml0eVwiO1xyXG4gIH0sIFtzaG93TW9kZV0pO1xyXG5cclxuICByZXR1cm4gKFxyXG4gICAgPGRpdiBjbGFzc05hbWU9XCJyb3VuZGVkLTN4bCBiZy13aGl0ZS81IHAtNiByaW5nLTEgcmluZy13aGl0ZS8xMFwiPlxyXG4gICAgICA8ZGl2IGNsYXNzTmFtZT1cImZsZXggZmxleC1jb2wgZ2FwLTQgbWQ6ZmxleC1yb3cgbWQ6aXRlbXMtZW5kIG1kOmp1c3RpZnktYmV0d2VlblwiPlxyXG4gICAgICAgIDxkaXY+XHJcbiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cInRleHQtbGcgZm9udC1zZW1pYm9sZFwiPlN0cmVhayBDYWxlbmRhcjwvZGl2PlxyXG4gICAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJtdC0xIHRleHQtc20gdGV4dC13aGl0ZS81NVwiPlxyXG4gICAgICAgICAgICB7bGVnZW5kTGFiZWx9IOKAoiB7aGVhdE1vZGUgPT09IFwiY291bnRcIiA/IFwiQ291bnQvZGF5XCIgOiBtZXRyaWMgPT09IFwiYXZnXCIgPyBcIkF2Zy9kYXlcIiA6IFwiTWF4L2RheVwifSDigKJ7XCIgXCJ9XHJcbiAgICAgICAgICAgIHtkYXlGaWx0ZXIgPT09IFwiYWxsXCIgPyBcIkFsbCBkYXlzXCIgOiBkYXlGaWx0ZXIgPT09IFwid2Vla2RheXNcIiA/IFwiV2Vla2RheXNcIiA6IFwiV2Vla2VuZHNcIn0g4oCiIHtyYW5nZS50b1VwcGVyQ2FzZSgpfVxyXG4gICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgPC9kaXY+XHJcblxyXG4gICAgICAgIHsvKiBGaWx0ZXJzICovfVxyXG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZmxleCBmbGV4LXdyYXAgaXRlbXMtY2VudGVyIGdhcC0zXCI+XHJcbiAgICAgICAgICB7LyogUmFuZ2Ugc2VnbWVudGVkICovfVxyXG4gICAgICAgICAgPFNlZ21lbnRlZFxyXG4gICAgICAgICAgICBsYWJlbD1cIlJhbmdlXCJcclxuICAgICAgICAgICAgdmFsdWU9e3JhbmdlfVxyXG4gICAgICAgICAgICBvbkNoYW5nZT17c2V0UmFuZ2V9XHJcbiAgICAgICAgICAgIG9wdGlvbnM9e1tcclxuICAgICAgICAgICAgICB7IHZhbHVlOiBcIjdkXCIsIGxhYmVsOiBcIjdEXCIgfSxcclxuICAgICAgICAgICAgICB7IHZhbHVlOiBcIjMwZFwiLCBsYWJlbDogXCIzMERcIiB9LFxyXG4gICAgICAgICAgICAgIHsgdmFsdWU6IFwiMTJ3XCIsIGxhYmVsOiBcIjEyV1wiIH0sXHJcbiAgICAgICAgICAgICAgeyB2YWx1ZTogXCI2bVwiLCBsYWJlbDogXCI2TVwiIH0sXHJcbiAgICAgICAgICAgIF19XHJcbiAgICAgICAgICAvPlxyXG5cclxuICAgICAgICAgIHsvKiBTaG93IG1vZGUgKi99XHJcbiAgICAgICAgICA8UGlsbFNlbGVjdFxyXG4gICAgICAgICAgICBsYWJlbD1cIlNob3dcIlxyXG4gICAgICAgICAgICB2YWx1ZT17c2hvd01vZGV9XHJcbiAgICAgICAgICAgIG9uQ2hhbmdlPXtzZXRTaG93TW9kZX1cclxuICAgICAgICAgICAgb3B0aW9ucz17W1xyXG4gICAgICAgICAgICAgIHsgdmFsdWU6IFwiYWxsXCIsIGxhYmVsOiBcIkFsbFwiIH0sXHJcbiAgICAgICAgICAgICAgeyB2YWx1ZTogXCJjb21wbGV0ZWRcIiwgbGFiZWw6IFwiQ29tcGxldGVkXCIgfSxcclxuICAgICAgICAgICAgICB7IHZhbHVlOiBcInN0cnVnZ2xpbmdcIiwgbGFiZWw6IFwiU3RydWdnbGluZ1wiIH0sXHJcbiAgICAgICAgICAgIF19XHJcbiAgICAgICAgICAvPlxyXG5cclxuICAgICAgICAgIHsvKiBNZXRyaWMgKi99XHJcbiAgICAgICAgICA8UGlsbFNlbGVjdFxyXG4gICAgICAgICAgICBsYWJlbD1cIk1ldHJpY1wiXHJcbiAgICAgICAgICAgIHZhbHVlPXttZXRyaWN9XHJcbiAgICAgICAgICAgIG9uQ2hhbmdlPXtzZXRNZXRyaWN9XHJcbiAgICAgICAgICAgIG9wdGlvbnM9e1tcclxuICAgICAgICAgICAgICB7IHZhbHVlOiBcIm1heFwiLCBsYWJlbDogXCJNYXgvZGF5XCIgfSxcclxuICAgICAgICAgICAgICB7IHZhbHVlOiBcImF2Z1wiLCBsYWJlbDogXCJBdmcvZGF5XCIgfSxcclxuICAgICAgICAgICAgXX1cclxuICAgICAgICAgIC8+XHJcblxyXG4gICAgICAgICAgPFBpbGxTZWxlY3RcclxuICAgICAgICAgICAgbGFiZWw9XCJEYXlzXCJcclxuICAgICAgICAgICAgdmFsdWU9e2RheUZpbHRlcn1cclxuICAgICAgICAgICAgb25DaGFuZ2U9e3NldERheUZpbHRlcn1cclxuICAgICAgICAgICAgb3B0aW9ucz17W1xyXG4gICAgICAgICAgICAgIHsgdmFsdWU6IFwiYWxsXCIsIGxhYmVsOiBcIkFsbFwiIH0sXHJcbiAgICAgICAgICAgICAgeyB2YWx1ZTogXCJ3ZWVrZGF5c1wiLCBsYWJlbDogXCJXZWVrZGF5c1wiIH0sXHJcbiAgICAgICAgICAgICAgeyB2YWx1ZTogXCJ3ZWVrZW5kc1wiLCBsYWJlbDogXCJXZWVrZW5kc1wiIH0sXHJcbiAgICAgICAgICAgIF19XHJcbiAgICAgICAgICAvPlxyXG5cclxuICAgICAgICAgIDxQaWxsU2VsZWN0XHJcbiAgICAgICAgICAgIGxhYmVsPVwiSGVhdFwiXHJcbiAgICAgICAgICAgIHZhbHVlPXtoZWF0TW9kZX1cclxuICAgICAgICAgICAgb25DaGFuZ2U9e3NldEhlYXRNb2RlfVxyXG4gICAgICAgICAgICBvcHRpb25zPXtbXHJcbiAgICAgICAgICAgICAgeyB2YWx1ZTogXCJwcm9ncmVzc1wiLCBsYWJlbDogXCJQcm9ncmVzc1wiIH0sXHJcbiAgICAgICAgICAgICAgeyB2YWx1ZTogXCJjb3VudFwiLCBsYWJlbDogXCJDb3VudFwiIH0sXHJcbiAgICAgICAgICAgIF19XHJcbiAgICAgICAgICAvPlxyXG4gICAgICAgIDwvZGl2PlxyXG4gICAgICA8L2Rpdj5cclxuXHJcbiAgICAgIDxkaXYgY2xhc3NOYW1lPVwibXQtNCBmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWJldHdlZW4gZ2FwLTQgdGV4dC14cyB0ZXh0LXdoaXRlLzUwXCI+XHJcbiAgICAgICAgPGRpdj57YFJlbmRlcmluZyAke3RvdGFsRGF5c30gZGF5cyAod2hvbGUgd2Vla3MpYH08L2Rpdj5cclxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImZsZXggaXRlbXMtY2VudGVyIGdhcC0yXCI+XHJcbiAgICAgICAgICA8c3Bhbj5MZXNzPC9zcGFuPlxyXG4gICAgICAgICAge1swLCAxLCAyLCAzLCA0XS5tYXAoKGkpID0+IChcclxuICAgICAgICAgICAgPHNwYW4ga2V5PXtpfSBjbGFzc05hbWU9e2BoLTMgdy0zIHJvdW5kZWQtc20gcmluZy0xICR7TEVWRUxTW2ldfWB9IC8+XHJcbiAgICAgICAgICApKX1cclxuICAgICAgICAgIDxzcGFuPk1vcmU8L3NwYW4+XHJcbiAgICAgICAgPC9kaXY+XHJcbiAgICAgIDwvZGl2PlxyXG5cclxuICAgICAgPGRpdiBjbGFzc05hbWU9XCJtdC01IG92ZXJmbG93LXgtYXV0b1wiPlxyXG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwibWluLXctWzcyMHB4XVwiPlxyXG4gICAgICAgICAgey8qIE1vbnRoIGxhYmVscyAqL31cclxuICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwibWItMiBncmlkIGdhcC0yIHRleHQteHMgdGV4dC13aGl0ZS80MFwiIHN0eWxlPXt7IGdyaWRUZW1wbGF0ZUNvbHVtbnM6IGAyOHB4IHJlcGVhdCgke3dlZWtzLmxlbmd0aH0sIDFmcilgIH19PlxyXG4gICAgICAgICAgICA8ZGl2IC8+XHJcbiAgICAgICAgICAgIHtsYWJlbHMubWFwKChtLCBpKSA9PiAoXHJcbiAgICAgICAgICAgICAgPGRpdiBrZXk9e2l9IGNsYXNzTmFtZT1cInBsLTFcIj57bX08L2Rpdj5cclxuICAgICAgICAgICAgKSl9XHJcbiAgICAgICAgICA8L2Rpdj5cclxuXHJcbiAgICAgICAgICB7LyogR3JpZCAqL31cclxuICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZ3JpZCBnYXAtMlwiIHN0eWxlPXt7IGdyaWRUZW1wbGF0ZUNvbHVtbnM6IGAyOHB4IHJlcGVhdCgke3dlZWtzLmxlbmd0aH0sIDFmcilgIH19PlxyXG4gICAgICAgICAgICB7LyogV2Vla2RheSBsYWJlbHMgKi99XHJcbiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZ3JpZCBncmlkLXJvd3MtNyBnYXAtMiB0ZXh0LXhzIHRleHQtd2hpdGUvNDBcIj5cclxuICAgICAgICAgICAgICB7W1wiTW9uXCIsIFwiXCIsIFwiV2VkXCIsIFwiXCIsIFwiRnJpXCIsIFwiXCIsIFwiU3VuXCJdLm1hcCgoZCwgaSkgPT4gKFxyXG4gICAgICAgICAgICAgICAgPGRpdiBrZXk9e2l9IGNsYXNzTmFtZT1cImgtNCBsZWFkaW5nLTRcIj57ZH08L2Rpdj5cclxuICAgICAgICAgICAgICApKX1cclxuICAgICAgICAgICAgPC9kaXY+XHJcblxyXG4gICAgICAgICAgICB7d2Vla3MubWFwKChjb2wsIGNJZHgpID0+IChcclxuICAgICAgICAgICAgICA8ZGl2IGtleT17Y0lkeH0gY2xhc3NOYW1lPVwiZ3JpZCBncmlkLXJvd3MtNyBnYXAtMlwiPlxyXG4gICAgICAgICAgICAgICAge2NvbC5tYXAoKGNlbGwsIHJJZHgpID0+IChcclxuICAgICAgICAgICAgICAgICAgPGJ1dHRvblxyXG4gICAgICAgICAgICAgICAgICAgIGtleT17cklkeH1cclxuICAgICAgICAgICAgICAgICAgICB0eXBlPVwiYnV0dG9uXCJcclxuICAgICAgICAgICAgICAgICAgICBvbk1vdXNlRW50ZXI9eygpID0+IHNldEhvdmVyKGNlbGwpfVxyXG4gICAgICAgICAgICAgICAgICAgIG9uTW91c2VMZWF2ZT17KCkgPT4gc2V0SG92ZXIobnVsbCl9XHJcbiAgICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPXtgaC00IHctNCByb3VuZGVkLVs0cHhdIHJpbmctMSB0cmFuc2l0aW9uICR7TEVWRUxTW2NlbGwubHZsXX0gaG92ZXI6c2NhbGUtMTEwYH1cclxuICAgICAgICAgICAgICAgICAgICB0aXRsZT17YCR7Y2VsbC5pc299IOKAoiAke2NlbGwucHJvZ30lYH1cclxuICAgICAgICAgICAgICAgICAgLz5cclxuICAgICAgICAgICAgICAgICkpfVxyXG4gICAgICAgICAgICAgIDwvZGl2PlxyXG4gICAgICAgICAgICApKX1cclxuICAgICAgICAgIDwvZGl2PlxyXG5cclxuICAgICAgICAgIHsvKiBUb29sdGlwICovfVxyXG4gICAgICAgICAge2hvdmVyID8gKFxyXG4gICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cIm10LTQgcm91bmRlZC0yeGwgYmctYmxhY2svNDAgcC0zIHRleHQtc20gdGV4dC13aGl0ZS83MCByaW5nLTEgcmluZy13aGl0ZS8xMFwiPlxyXG4gICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT1cImZvbnQtc2VtaWJvbGQgdGV4dC13aGl0ZVwiPntob3Zlci5pc299PC9zcGFuPntcIiBcIn1cclxuICAgICAgICAgICAgICDigJR7XCIgXCJ9XHJcbiAgICAgICAgICAgICAge2hlYXRNb2RlID09PSBcImNvdW50XCIgPyAoXHJcbiAgICAgICAgICAgICAgICA8PlxyXG4gICAgICAgICAgICAgICAgICBlbnRyaWVzIDxzcGFuIGNsYXNzTmFtZT1cImZvbnQtc2VtaWJvbGQgdGV4dC13aGl0ZVwiPntNYXRoLnJvdW5kKChob3Zlci5wcm9nIHx8IDApIC8gMjUpfTwvc3Bhbj5cclxuICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVwidGV4dC13aGl0ZS80NVwiPiAoMeKGkjI1LCAy4oaSNTAsIDPihpI3NSwgNCvihpIxMDApPC9zcGFuPlxyXG4gICAgICAgICAgICAgICAgPC8+XHJcbiAgICAgICAgICAgICAgKSA6IChcclxuICAgICAgICAgICAgICAgIDw+XHJcbiAgICAgICAgICAgICAgICAgIGFjdGl2aXR5IDxzcGFuIGNsYXNzTmFtZT1cImZvbnQtc2VtaWJvbGQgdGV4dC13aGl0ZVwiPntob3Zlci5wcm9nfSU8L3NwYW4+XHJcbiAgICAgICAgICAgICAgICA8Lz5cclxuICAgICAgICAgICAgICApfVxyXG4gICAgICAgICAgICAgIHtzaG93TW9kZSAhPT0gXCJhbGxcIiB8fCBkYXlGaWx0ZXIgIT09IFwiYWxsXCIgPyAoXHJcbiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJ0ZXh0LXdoaXRlLzQ1XCI+IChmaWx0ZXJlZCk8L3NwYW4+XHJcbiAgICAgICAgICAgICAgKSA6IG51bGx9XHJcbiAgICAgICAgICAgIDwvZGl2PlxyXG4gICAgICAgICAgKSA6IChcclxuICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJtdC00IHRleHQtc20gdGV4dC13aGl0ZS80NVwiPkhvdmVyIGEgZGF5IHRvIHNlZSBkZXRhaWxzLjwvZGl2PlxyXG4gICAgICAgICAgKX1cclxuICAgICAgICA8L2Rpdj5cclxuICAgICAgPC9kaXY+XHJcbiAgICA8L2Rpdj5cclxuICApO1xyXG59XHJcblxyXG5mdW5jdGlvbiBTZWdtZW50ZWQoeyBsYWJlbCwgdmFsdWUsIG9uQ2hhbmdlLCBvcHRpb25zIH0pIHtcclxuICByZXR1cm4gKFxyXG4gICAgPGRpdiBjbGFzc05hbWU9XCJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMlwiPlxyXG4gICAgICA8c3BhbiBjbGFzc05hbWU9XCJ0ZXh0LXhzIHRleHQtd2hpdGUvNTBcIj57bGFiZWx9PC9zcGFuPlxyXG5cclxuICAgICAgPGRpdiBjbGFzc05hbWU9XCJpbmxpbmUtZmxleCByb3VuZGVkLTJ4bCBiZy13aGl0ZS8xMCBwLTEgcmluZy0xIHJpbmctd2hpdGUvMTUgYmFja2Ryb3AtYmx1clwiPlxyXG4gICAgICAgIHtvcHRpb25zLm1hcCgob3B0KSA9PiB7XHJcbiAgICAgICAgICBjb25zdCBhY3RpdmUgPSBvcHQudmFsdWUgPT09IHZhbHVlO1xyXG4gICAgICAgICAgcmV0dXJuIChcclxuICAgICAgICAgICAgPGJ1dHRvblxyXG4gICAgICAgICAgICAgIGtleT17b3B0LnZhbHVlfVxyXG4gICAgICAgICAgICAgIHR5cGU9XCJidXR0b25cIlxyXG4gICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IG9uQ2hhbmdlKG9wdC52YWx1ZSl9XHJcbiAgICAgICAgICAgICAgY2xhc3NOYW1lPXtbXHJcbiAgICAgICAgICAgICAgICBcInJvdW5kZWQteGwgcHgtMyBweS0xIHRleHQteHMgdHJhbnNpdGlvblwiLFxyXG4gICAgICAgICAgICAgICAgYWN0aXZlXHJcbiAgICAgICAgICAgICAgICAgID8gXCJiZy13aGl0ZSB0ZXh0LWJsYWNrIHNoYWRvd1wiXHJcbiAgICAgICAgICAgICAgICAgIDogXCJ0ZXh0LXdoaXRlLzcwIGhvdmVyOnRleHQtd2hpdGUgaG92ZXI6Ymctd2hpdGUvMTBcIixcclxuICAgICAgICAgICAgICBdLmpvaW4oXCIgXCIpfVxyXG4gICAgICAgICAgICA+XHJcbiAgICAgICAgICAgICAge29wdC5sYWJlbH1cclxuICAgICAgICAgICAgPC9idXR0b24+XHJcbiAgICAgICAgICApO1xyXG4gICAgICAgIH0pfVxyXG4gICAgICA8L2Rpdj5cclxuICAgIDwvZGl2PlxyXG4gICk7XHJcbn1cclxuXHJcbmZ1bmN0aW9uIFBpbGxTZWxlY3QoeyBsYWJlbCwgdmFsdWUsIG9uQ2hhbmdlLCBvcHRpb25zIH0pIHtcclxuICByZXR1cm4gKFxyXG4gICAgPGxhYmVsIGNsYXNzTmFtZT1cImZsZXggaXRlbXMtY2VudGVyIGdhcC0yIHJvdW5kZWQtMnhsIGJnLXdoaXRlLzEwIHB4LTMgcHktMiByaW5nLTEgcmluZy13aGl0ZS8xNSBiYWNrZHJvcC1ibHVyXCI+XHJcbiAgICAgIDxzcGFuIGNsYXNzTmFtZT1cInRleHQteHMgdGV4dC13aGl0ZS81MFwiPntsYWJlbH08L3NwYW4+XHJcblxyXG4gICAgICA8c2VsZWN0XHJcbiAgICAgICAgY2xhc3NOYW1lPVwicm91bmRlZC14bCBiZy13aGl0ZSBweC0zIHB5LTEgdGV4dC1zbSB0ZXh0LWJsYWNrIG91dGxpbmUtbm9uZVwiXHJcbiAgICAgICAgdmFsdWU9e3ZhbHVlfVxyXG4gICAgICAgIG9uQ2hhbmdlPXsoZSkgPT4gb25DaGFuZ2UoZS50YXJnZXQudmFsdWUpfVxyXG4gICAgICA+XHJcbiAgICAgICAge29wdGlvbnMubWFwKChvKSA9PiAoXHJcbiAgICAgICAgICA8b3B0aW9uIGtleT17by52YWx1ZX0gdmFsdWU9e28udmFsdWV9PlxyXG4gICAgICAgICAgICB7by5sYWJlbH1cclxuICAgICAgICAgIDwvb3B0aW9uPlxyXG4gICAgICAgICkpfVxyXG4gICAgICA8L3NlbGVjdD5cclxuICAgIDwvbGFiZWw+XHJcbiAgKTtcclxufVxyXG4iXSwiZmlsZSI6IkM6L1VzZXJzL0FkbWluaXN0cmF0b3IvRGVza3RvcC93b3JrL3dhbGlkZC9oYWJpdC10cmFja2VyL2hhYml0LXRyYWNrZXItZnJvbnRlbmQvc3JjL2NvbXBvbmVudHMvU3RyZWFrQ2FsZW5kYXIuanN4In0=

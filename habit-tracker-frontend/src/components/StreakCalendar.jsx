@@ -27,11 +27,11 @@ function intensity(progress) {
 }
 
 const LEVELS = [
-  "bg-white/5 ring-white/10",
-  "bg-cyan-400/25 ring-cyan-300/25",
-  "bg-cyan-400/45 ring-cyan-300/30",
-  "bg-fuchsia-400/55 ring-fuchsia-300/35",
-  "bg-indigo-400/70 ring-indigo-300/40",
+  "bg-slate-100 ring-slate-200",
+  "bg-cyan-100 ring-cyan-200",
+  "bg-cyan-300 ring-cyan-300",
+  "bg-fuchsia-400 ring-fuchsia-300",
+  "bg-indigo-600 ring-indigo-500",
 ];
 
 const RANGE_OPTIONS = [
@@ -43,6 +43,7 @@ const RANGE_OPTIONS = [
 
 export default function StreakCalendar({ habits }) {
   const [hover, setHover] = useState(null);
+  const hasLogs = (habits || []).some((habit) => habit?.date);
 
   const [range, setRange] = useState("12w");
   const [showMode, setShowMode] = useState("all"); // all | completed | struggling
@@ -153,11 +154,11 @@ export default function StreakCalendar({ habits }) {
   }, [showMode]);
 
   return (
-    <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
+    <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="text-lg font-semibold">Streak Calendar</div>
-          <div className="mt-1 text-sm text-white/55">
+          <div className="text-lg font-semibold text-[var(--color-text-primary)]">Streak Calendar</div>
+          <div className="mt-1 text-sm text-[var(--color-text-secondary)]">
             {legendLabel} • {heatMode === "count" ? "Count/day" : metric === "avg" ? "Avg/day" : "Max/day"} •{" "}
             {dayFilter === "all" ? "All days" : dayFilter === "weekdays" ? "Weekdays" : "Weekends"} • {range.toUpperCase()}
           </div>
@@ -224,7 +225,7 @@ export default function StreakCalendar({ habits }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-4 text-xs text-white/50">
+      <div className="mt-4 flex items-center justify-between gap-4 text-xs text-[var(--color-text-muted)]">
         <div>{`Rendering ${totalDays} days (whole weeks)`}</div>
         <div className="flex items-center gap-2">
           <span>Less</span>
@@ -235,10 +236,19 @@ export default function StreakCalendar({ habits }) {
         </div>
       </div>
 
+      {!hasLogs ? (
+        <div className="mt-5 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-soft)] p-6 text-center">
+          <div className="text-sm font-semibold text-[var(--color-text-primary)]">No habit logs yet</div>
+          <div className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--color-text-secondary)]">
+            Log a habit from the dashboard and this heatmap will show your activity by day.
+          </div>
+        </div>
+      ) : null}
+
       <div className="mt-5 overflow-x-auto">
         <div className="min-w-[720px]">
           {/* Month labels */}
-          <div className="mb-2 grid gap-2 text-xs text-white/40" style={{ gridTemplateColumns: `28px repeat(${weeks.length}, 1fr)` }}>
+          <div className="mb-2 grid gap-2 text-xs font-medium text-[var(--color-text-muted)]" style={{ gridTemplateColumns: `28px repeat(${weeks.length}, 1fr)` }}>
             <div />
             {labels.map((m, i) => (
               <div key={i} className="pl-1">{m}</div>
@@ -248,7 +258,7 @@ export default function StreakCalendar({ habits }) {
           {/* Grid */}
           <div className="grid gap-2" style={{ gridTemplateColumns: `28px repeat(${weeks.length}, 1fr)` }}>
             {/* Weekday labels */}
-            <div className="grid grid-rows-7 gap-2 text-xs text-white/40">
+            <div className="grid grid-rows-7 gap-2 text-xs font-medium text-[var(--color-text-muted)]">
               {["Mon", "", "Wed", "", "Fri", "", "Sun"].map((d, i) => (
                 <div key={i} className="h-4 leading-4">{d}</div>
               ))}
@@ -272,25 +282,25 @@ export default function StreakCalendar({ habits }) {
 
           {/* Tooltip */}
           {hover ? (
-            <div className="mt-4 rounded-2xl bg-black/40 p-3 text-sm text-white/70 ring-1 ring-white/10">
-              <span className="font-semibold text-white">{hover.iso}</span>{" "}
+            <div className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-3 text-sm text-[var(--color-text-secondary)]">
+              <span className="font-semibold text-[var(--color-text-primary)]">{hover.iso}</span>{" "}
               —{" "}
               {heatMode === "count" ? (
                 <>
-                  entries <span className="font-semibold text-white">{Math.round((hover.prog || 0) / 25)}</span>
-                  <span className="text-white/45"> (1→25, 2→50, 3→75, 4+→100)</span>
+                  entries <span className="font-semibold text-[var(--color-text-primary)]">{Math.round((hover.prog || 0) / 25)}</span>
+                  <span className="text-[var(--color-text-muted)]"> (1→25, 2→50, 3→75, 4+→100)</span>
                 </>
               ) : (
                 <>
-                  activity <span className="font-semibold text-white">{hover.prog}%</span>
+                  activity <span className="font-semibold text-[var(--color-text-primary)]">{hover.prog}%</span>
                 </>
               )}
               {showMode !== "all" || dayFilter !== "all" ? (
-                <span className="text-white/45"> (filtered)</span>
+                <span className="text-[var(--color-text-muted)]"> (filtered)</span>
               ) : null}
             </div>
           ) : (
-            <div className="mt-4 text-sm text-white/45">Hover a day to see details.</div>
+            <div className="mt-4 text-sm text-[var(--color-text-muted)]">Hover a day to see details.</div>
           )}
         </div>
       </div>
@@ -301,9 +311,9 @@ export default function StreakCalendar({ habits }) {
 function Segmented({ label, value, onChange, options }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-white/50">{label}</span>
+      <span className="text-xs font-semibold text-[var(--color-text-muted)]">{label}</span>
 
-      <div className="inline-flex rounded-2xl bg-white/10 p-1 ring-1 ring-white/15 backdrop-blur">
+      <div className="inline-flex rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-1">
         {options.map((opt) => {
           const active = opt.value === value;
           return (
@@ -314,8 +324,8 @@ function Segmented({ label, value, onChange, options }) {
               className={[
                 "rounded-xl px-3 py-1 text-xs transition",
                 active
-                  ? "bg-white text-black shadow"
-                  : "text-white/70 hover:text-white hover:bg-white/10",
+                  ? "bg-[var(--color-surface)] text-[var(--color-accent)] shadow-sm"
+                  : "text-[var(--color-text-secondary)] hover:bg-white hover:text-[var(--color-text-primary)]",
               ].join(" ")}
             >
               {opt.label}
@@ -329,11 +339,11 @@ function Segmented({ label, value, onChange, options }) {
 
 function PillSelect({ label, value, onChange, options }) {
   return (
-    <label className="flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 ring-1 ring-white/15 backdrop-blur">
-      <span className="text-xs text-white/50">{label}</span>
+    <label className="flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-3 py-2">
+      <span className="text-xs font-semibold text-[var(--color-text-muted)]">{label}</span>
 
       <select
-        className="rounded-xl bg-white px-3 py-1 text-sm text-black outline-none"
+        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[#3337a6]/10"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >

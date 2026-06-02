@@ -2,42 +2,60 @@ import { useEffect, useState } from "react";
 import InsightsPanel from "../components/InsightsPanel";
 import { useHabits } from "../context/HabitsContext";
 import { fetchLapseRisk } from "../lib/predictions";
+import { fetchContextCorrelations } from "../lib/analytics";
 import ExportReportButton from "../components/ExportReportButton";
+import PageHeader from "../components/ui/PageHeader";
 
 export default function InsightsPage() {
   const { habitDefinitions, habitLogs } = useHabits();
   const [predictions, setPredictions] = useState([]);
+  const [contextCorrelations, setContextCorrelations] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let alive = true;
     (async () => {
+      setLoading(true);
       try {
-        const data = await fetchLapseRisk();
-        setPredictions(Array.isArray(data) ? data : []);
+        const [riskData, contextData] = await Promise.all([
+          fetchLapseRisk(),
+          fetchContextCorrelations().catch(() => null),
+        ]);
+        if (!alive) return;
+        setPredictions(Array.isArray(riskData) ? riskData : []);
+        setContextCorrelations(contextData);
       } catch (e) {
         console.error("Failed to load predictions", e);
+      } finally {
+        if (alive) setLoading(false);
       }
     })();
+    return () => {
+      alive = false;
+    };
   }, [habitDefinitions]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Insights</h1>
-          <p className="mt-2 text-white/60">Signals that help you stay consistent.</p>
-        </div>
-
-        <ExportReportButton 
+      <PageHeader
+        eyebrow="AI wellness insights"
+        title="Signals that help you stay consistent"
+        description="Predictions and patterns are derived from logged habits, check-ins, and the existing ML endpoint."
+        actions={
+          <ExportReportButton 
           habits={habitDefinitions} 
           logs={habitLogs} 
           predictions={predictions} 
         />
-      </div>
+        }
+      />
 
       <InsightsPanel 
         habits={habitDefinitions} 
         logs={habitLogs} 
         predictions={predictions} 
+        contextCorrelations={contextCorrelations}
+        loading={loading}
       />
     </div>
   );

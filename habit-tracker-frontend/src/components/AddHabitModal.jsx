@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import Badge from "./ui/Badge";
+import Button from "./ui/Button";
+import Card from "./ui/Card";
+import ProgressBar from "./ui/ProgressBar";
 
 const FAV_KEY = "habitify:favorites";
 
@@ -40,7 +44,17 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
     if (!open) return;
     // Reset template search when opening
     setQuery("");
+    setTimeout(() => nameInputRef.current?.focus?.(), 0);
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose, open]);
 
   useEffect(() => {
     saveFavs(favs);
@@ -124,33 +138,28 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-[#0b0d14]/90 p-1 ring-1 ring-white/15 backdrop-blur-xl">
-        <div className="rounded-[22px] bg-white/5 p-6 ring-1 ring-white/10">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="add-habit-title">
+      <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-3xl bg-white p-1 shadow-2xl ring-1 ring-slate-200">
+        <div className="rounded-[22px] bg-[#f7fafc] p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold">Add a new habit</h2>
-              <p className="mt-1 text-sm text-white/55">
+              <h2 id="add-habit-title" className="text-xl font-semibold text-slate-950">Add a new habit</h2>
+              <p className="mt-1 text-sm text-slate-600">
                 Use templates to log faster. Pin your favorites.
               </p>
             </div>
 
-            <button
-              onClick={onClose}
-              className="rounded-xl bg-white/10 px-3 py-1 text-sm ring-1 ring-white/15 hover:bg-white/15"
-              type="button"
-            >
+            <Button onClick={onClose} variant="secondary" size="sm">
               Close
-            </button>
+            </Button>
           </div>
 
-          {/* Templates */}
-          <div className="mt-6 rounded-2xl bg-black/30 p-4 ring-1 ring-white/10">
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="text-sm font-semibold text-white/85">Templates</div>
+              <div className="text-sm font-semibold text-slate-800">Templates</div>
 
               <input
-                className="w-full md:max-w-sm rounded-2xl bg-white/5 px-4 py-2 text-sm outline-none ring-1 ring-white/10 placeholder:text-white/30 focus:ring-cyan-300/35"
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10 md:max-w-sm"
                 placeholder="Search habits… (e.g., read, gym, study)"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -158,14 +167,14 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
             </div>
 
             {normalizedNames.length === 0 ? (
-              <div className="mt-3 text-sm text-white/45">
+              <div className="mt-3 text-sm text-slate-500">
                 No templates yet. Create a habit once and it will appear here.
               </div>
             ) : (
               <>
                 {favoriteNames.length > 0 ? (
                   <div className="mt-4">
-                    <div className="mb-2 text-xs text-white/50">Pinned</div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Pinned</div>
                     <div className="flex flex-wrap gap-2">
                       {favoriteNames.map((n) => (
                         <TemplateChip
@@ -183,7 +192,7 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
                 ) : null}
 
                 <div className="mt-4">
-                  <div className="mb-2 text-xs text-white/50">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     {query.trim() ? "Results" : "All templates"}
                   </div>
 
@@ -191,11 +200,11 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
                     {filteredNames.slice(0, 40).map((n) => (
                       <div
                         key={n}
-                        className="flex items-center justify-between gap-3 rounded-2xl bg-white/5 px-3 py-2 ring-1 ring-white/10 hover:bg-white/[0.07]"
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50"
                       >
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">{n}</div>
-                          <div className="text-xs text-white/45">
+                          <div className="truncate text-sm font-semibold text-slate-950">{n}</div>
+                          <div className="text-xs text-slate-500">
                             {favSet.has(n) ? "Pinned" : "Not pinned"} • Quick log uses today
                           </div>
                         </div>
@@ -205,10 +214,10 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
                             type="button"
                             disabled={busy}
                             onClick={() => toggleFav(n)}
-                            className={`rounded-xl px-3 py-1 text-xs ring-1 ${
+                            className={`rounded-lg px-3 py-1 text-xs font-semibold ring-1 ${
                               favSet.has(n)
-                                ? "bg-white text-black ring-white/20"
-                                : "bg-white/10 text-white ring-white/15 hover:bg-white/15"
+                                ? "bg-[#3337a6] text-white ring-[#3337a6]"
+                                : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
                             }`}
                             title={favSet.has(n) ? "Unpin" : "Pin"}
                           >
@@ -219,7 +228,7 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
                             type="button"
                             disabled={busy}
                             onClick={() => useTemplate(n)}
-                            className="rounded-xl bg-white/10 px-3 py-1 text-xs ring-1 ring-white/15 hover:bg-white/15"
+                            className="rounded-lg bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
                           >
                             Use
                           </button>
@@ -228,7 +237,7 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
                             type="button"
                             disabled={busy}
                             onClick={() => quickLogToday(n)}
-                            className="rounded-xl bg-gradient-to-r from-cyan-400/80 via-fuchsia-400/80 to-indigo-400/80 px-3 py-1 text-xs font-semibold text-black"
+                            className="rounded-lg bg-[#3337a6] px-3 py-1 text-xs font-semibold text-white"
                           >
                             Log Today
                           </button>
@@ -237,7 +246,7 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
                     ))}
 
                     {filteredNames.length > 40 ? (
-                      <div className="pt-2 text-xs text-white/40">
+                        <div className="pt-2 text-xs text-slate-500">
                         Showing first 40 results. Refine search to narrow down.
                       </div>
                     ) : null}
@@ -247,13 +256,28 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
             )}
           </div>
 
-          {/* Manual form */}
+          <Card className="mt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-500">Live preview</div>
+                <div className="mt-2 text-lg font-semibold text-slate-950">
+                  {name.trim() || "New habit"}
+                </div>
+                <div className="mt-1 text-sm text-slate-500">{date} • {category}</div>
+              </div>
+              <Badge tone={Number(progress) >= 80 ? "green" : Number(progress) > 0 ? "amber" : "slate"}>
+                {Number(progress || 0)}%
+              </Badge>
+            </div>
+            <ProgressBar value={Number(progress || 0)} className="mt-4" />
+          </Card>
+
           <form onSubmit={submit} className="mt-6 space-y-4">
             <div className="space-y-2">
-              <label className="text-xs text-white/60">Habit name</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Habit name</label>
               <input
                 ref={nameInputRef}
-                className="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm outline-none ring-1 ring-white/10 placeholder:text-white/30 focus:ring-cyan-300/35"
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10"
                 placeholder="e.g., Read 10 pages"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -263,17 +287,17 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs text-white/60">Category</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Category</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setCategory(cat)}
-                    className={`rounded-xl px-3 py-1.5 text-xs transition ring-1 ${
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ring-1 ${
                       category === cat
-                        ? "bg-white text-black ring-white/20"
-                        : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10"
+                        ? "bg-[#3337a6] text-white ring-[#3337a6]"
+                        : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
                     }`}
                   >
                     {cat}
@@ -284,9 +308,9 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-xs text-white/60">Progress (%)</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Progress (%)</label>
                 <input
-                  className="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-fuchsia-300/35"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10"
                   type="number"
                   min={0}
                   max={100}
@@ -296,9 +320,9 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-white/60">Date</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Date</label>
                 <input
-                  className="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-indigo-300/35"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10"
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
@@ -307,18 +331,19 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
             </div>
 
             {err ? (
-              <div className="rounded-2xl bg-red-500/10 p-3 text-sm text-red-200 ring-1 ring-red-300/20">
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {err}
               </div>
             ) : null}
 
-            <button
+            <Button
               disabled={!canSubmit}
-              className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-black transition active:scale-[0.99] disabled:opacity-60"
               type="submit"
+              className="w-full"
+              size="lg"
             >
               {busy ? "Creating..." : "Create habit"}
-            </button>
+            </Button>
           </form>
         </div>
       </div>
@@ -328,15 +353,15 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
 
 function TemplateChip({ name, pinned, disabled, onUse, onQuickLog, onTogglePin }) {
   return (
-    <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
-      <div className="max-w-[180px] truncate text-sm font-semibold">{name}</div>
+    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+      <div className="max-w-[180px] truncate text-sm font-semibold text-slate-950">{name}</div>
 
       <button
         type="button"
         disabled={disabled}
         onClick={onTogglePin}
-        className={`rounded-xl px-2 py-1 text-xs ring-1 ${
-          pinned ? "bg-white text-black ring-white/20" : "bg-white/10 text-white ring-white/15 hover:bg-white/15"
+        className={`rounded-lg px-2 py-1 text-xs font-semibold ring-1 ${
+          pinned ? "bg-[#3337a6] text-white ring-[#3337a6]" : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
         }`}
         title={pinned ? "Unpin" : "Pin"}
       >
@@ -347,7 +372,7 @@ function TemplateChip({ name, pinned, disabled, onUse, onQuickLog, onTogglePin }
         type="button"
         disabled={disabled}
         onClick={onUse}
-        className="rounded-xl bg-white/10 px-2 py-1 text-xs ring-1 ring-white/15 hover:bg-white/15"
+        className="rounded-lg bg-white px-2 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
       >
         Use
       </button>
@@ -356,7 +381,7 @@ function TemplateChip({ name, pinned, disabled, onUse, onQuickLog, onTogglePin }
         type="button"
         disabled={disabled}
         onClick={onQuickLog}
-        className="rounded-xl bg-gradient-to-r from-cyan-400/80 via-fuchsia-400/80 to-indigo-400/80 px-2 py-1 text-xs font-semibold text-black"
+        className="rounded-lg bg-[#3337a6] px-2 py-1 text-xs font-semibold text-white"
       >
         Today
       </button>

@@ -94,8 +94,8 @@ export default function CoreHabitsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold">Core Habits</h1>
-        <p className="mt-2 text-white/60">
+        <h1 className="text-3xl font-semibold text-[var(--color-text-primary)]">Core Habits</h1>
+        <p className="mt-2 text-[var(--color-text-secondary)]">
           Your daily essentials. These are the habits that keep your foundation strong.
         </p>
       </div>
@@ -107,42 +107,42 @@ export default function CoreHabitsPage() {
           return (
             <div
               key={habit.name}
-              className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/[0.07]"
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(15,23,42,0.08)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-lg font-semibold">{habit.name}</div>
-                  <div className="mt-2 text-sm text-white/60">
+                  <div className="text-lg font-semibold text-[var(--color-text-primary)]">{habit.name}</div>
+                  <div className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
                     {habit.description}
                   </div>
                 </div>
 
-                <span className="rounded-xl bg-white px-3 py-1 text-xs font-semibold text-black ring-1 ring-white/20">
+                <span className="rounded-xl bg-indigo-50 px-3 py-1 text-xs font-semibold text-[var(--color-accent)] ring-1 ring-indigo-100">
                   Must-do
                 </span>
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-2 text-sm text-white/70">
+              <div className="mt-5 grid grid-cols-3 gap-2 text-sm text-[var(--color-text-secondary)]">
                 <div>
-                  <div className="text-xs text-white/50">Category</div>
-                  <div className="font-semibold">{habit.category}</div>
+                  <div className="text-xs text-[var(--color-text-muted)]">Category</div>
+                  <div className="font-semibold text-[var(--color-text-primary)]">{habit.category}</div>
                 </div>
 
                 <div>
-                  <div className="text-xs text-white/50">Target</div>
-                  <div className="font-semibold">{habit.target}</div>
+                  <div className="text-xs text-[var(--color-text-muted)]">Target</div>
+                  <div className="font-semibold text-[var(--color-text-primary)]">{habit.target}</div>
                 </div>
 
                 <div>
-                  <div className="text-xs text-white/50">Today</div>
-                  <div className="font-semibold">
+                  <div className="text-xs text-[var(--color-text-muted)]">Today</div>
+                  <div className="font-semibold text-[var(--color-text-primary)]">
                     {status?.todayProgress || 0}%
                   </div>
                 </div>
               </div>
 
               {status?.missed2 ? (
-                <div className="mt-4 rounded-2xl bg-yellow-400/10 p-3 text-sm text-yellow-100 ring-1 ring-yellow-300/20">
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                   Friendly reminder: you missed this for 2 days. A small comeback
                   today matters.
                 </div>

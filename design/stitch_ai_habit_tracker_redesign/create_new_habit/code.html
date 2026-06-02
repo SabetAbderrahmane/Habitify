@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HabitSphere - Add Habit</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-tint": "#4c51bf",
+                            "tertiary-container": "#456648",
+                            "on-tertiary": "#ffffff",
+                            "secondary-fixed-dim": "#b8c8e0",
+                            "primary-container": "#4c51bf",
+                            "on-primary-container": "#d4d5ff",
+                            "on-primary-fixed": "#03006d",
+                            "on-tertiary-container": "#bce2bc",
+                            "inverse-primary": "#bfc1ff",
+                            "surface-container": "#ebeef0",
+                            "surface-container-high": "#e5e9eb",
+                            "inverse-on-surface": "#eef1f3",
+                            "primary-fixed-dim": "#bfc1ff",
+                            "on-surface-variant": "#464653",
+                            "tertiary": "#2d4e32",
+                            "on-tertiary-fixed": "#01210a",
+                            "surface-dim": "#d7dadc",
+                            "background": "#f7fafc",
+                            "surface-container-highest": "#e0e3e5",
+                            "outline": "#767684",
+                            "on-error-container": "#93000a",
+                            "secondary-fixed": "#d4e4fc",
+                            "on-secondary-fixed": "#0d1c2e",
+                            "secondary-container": "#d1e1fa",
+                            "on-error": "#ffffff",
+                            "on-secondary-container": "#556479",
+                            "on-primary": "#ffffff",
+                            "on-primary-fixed-variant": "#3337a6",
+                            "on-background": "#181c1e",
+                            "on-secondary": "#ffffff",
+                            "error-container": "#ffdad6",
+                            "secondary": "#515f74",
+                            "tertiary-fixed": "#c6ecc6",
+                            "error": "#ba1a1a",
+                            "on-secondary-fixed-variant": "#39485c",
+                            "surface-variant": "#e0e3e5",
+                            "surface": "#f7fafc",
+                            "inverse-surface": "#2d3133",
+                            "surface-bright": "#f7fafc",
+                            "primary-fixed": "#e1e0ff",
+                            "tertiary-fixed-dim": "#abd0ab",
+                            "primary": "#3337a6",
+                            "surface-container-lowest": "#ffffff",
+                            "outline-variant": "#c7c5d5",
+                            "on-tertiary-fixed-variant": "#2d4e32",
+                            "surface-container-low": "#f1f4f6",
+                            "on-surface": "#181c1e"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "margin-mobile": "16px",
+                            "xs": "4px",
+                            "max-width": "1200px",
+                            "gutter": "24px",
+                            "md": "16px",
+                            "xl": "32px",
+                            "xxl": "48px",
+                            "lg": "24px",
+                            "unit": "4px",
+                            "sm": "8px"
+                    },
+                    "fontFamily": {
+                            "label-caps": ["Inter"],
+                            "body-md": ["Inter"],
+                            "headline-lg": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "display-lg": ["Inter"],
+                            "stats-num": ["Inter"],
+                            "headline-lg-mobile": ["Inter"],
+                            "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                            "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.08em", "fontWeight": "600"}],
+                            "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                            "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                            "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                            "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                            "stats-num": ["24px", {"lineHeight": "1.0", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                            "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Input Styles */
+        .input-minimal {
+            border: none;
+            border-bottom: 1px solid var(--tw-colors-outline-variant);
+            border-radius: 0;
+            background: transparent;
+            padding: 8px 0;
+            transition: all 0.2s ease;
+        }
+        .input-minimal:focus {
+            outline: none;
+            box-shadow: none;
+            border-bottom: 2px solid var(--tw-colors-primary);
+        }
+        
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(247, 250, 252, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(199, 197, 213, 0.2);
+        }
+        
+        /* Radio Button Cards */
+        .radio-card input[type="radio"]:checked + div {
+            border-color: var(--tw-colors-primary);
+            background-color: var(--tw-colors-primary-container);
+            color: var(--tw-colors-on-primary-container);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row">
+<!-- Shell Suppression: Transactional Form (Add/Edit) -> No SideNav/BottomNav/TopNav -->
+<main class="flex-1 w-full max-w-max-width mx-auto px-margin-mobile md:px-lg py-xl md:py-xxl">
+<!-- Header -->
+<header class="mb-xl">
+<button class="flex items-center text-on-surface-variant hover:text-primary transition-colors mb-sm" onclick="history.back()">
+<span class="material-symbols-outlined mr-xs">arrow_back</span>
+<span class="font-label-caps text-label-caps">Cancel</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary">New Habit</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Define a new routine to track.</p>
+</header>
+<!-- Main Content Area: Form + Preview -->
+<div class="flex flex-col lg:flex-row gap-xl lg:gap-xxl items-start">
+<!-- Form Section -->
+<section class="flex-1 w-full bg-surface-container-lowest rounded-xl p-lg border border-outline-variant/20 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+<form class="space-y-xl" id="habitForm">
+<!-- Basic Info -->
+<div class="space-y-lg">
+<div class="relative">
+<label class="font-label-caps text-label-caps text-on-surface-variant absolute -top-4 left-0" for="habitName">Habit Name</label>
+<input class="input-minimal w-full font-body-lg text-body-lg text-on-surface placeholder:text-outline/50" id="habitName" name="habitName" oninput="updatePreview()" placeholder="e.g., Morning Meditation" required="" type="text"/>
+</div>
+<div class="relative mt-8">
+<label class="font-label-caps text-label-caps text-on-surface-variant absolute -top-4 left-0" for="category">Category</label>
+<select class="input-minimal w-full font-body-md text-body-md text-on-surface appearance-none" id="category" name="category" onchange="updatePreview()" required="">
+<option disabled="" selected="" value="">Select a category</option>
+<option value="Mindfulness">Mindfulness</option>
+<option value="Fitness">Fitness</option>
+<option value="Learning">Learning</option>
+<option value="Health">Health</option>
+</select>
+<span class="material-symbols-outlined absolute right-0 top-2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Frequency -->
+<div class="space-y-md">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">Frequency</h3>
+<div class="grid grid-cols-3 gap-md">
+<label class="radio-card cursor-pointer">
+<input checked="" class="sr-only" name="frequency" onchange="updatePreview()" type="radio" value="Daily"/>
+<div class="border border-outline-variant rounded-lg p-sm text-center transition-colors">
+<span class="font-body-md text-body-md font-medium">Daily</span>
+</div>
+</label>
+<label class="radio-card cursor-pointer">
+<input class="sr-only" name="frequency" onchange="updatePreview()" type="radio" value="Weekly"/>
+<div class="border border-outline-variant rounded-lg p-sm text-center transition-colors">
+<span class="font-body-md text-body-md font-medium">Weekly</span>
+</div>
+</label>
+<label class="radio-card cursor-pointer">
+<input class="sr-only" name="frequency" onchange="updatePreview()" type="radio" value="Custom"/>
+<div class="border border-outline-variant rounded-lg p-sm text-center transition-colors">
+<span class="font-body-md text-body-md font-medium">Custom</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Goal & Reminder -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg mt-8">
+<div class="relative">
+<label class="font-label-caps text-label-caps text-on-surface-variant absolute -top-4 left-0" for="goal">Goal (Daily)</label>
+<input class="input-minimal w-full font-body-md text-body-md text-on-surface" id="goal" name="goal" oninput="updatePreview()" placeholder="e.g., 10 mins, 2 liters" type="text"/>
+</div>
+<div class="relative">
+<label class="font-label-caps text-label-caps text-on-surface-variant absolute -top-4 left-0" for="reminder">Reminder Time</label>
+<input class="input-minimal w-full font-body-md text-body-md text-on-surface" id="reminder" name="reminder" type="time"/>
+</div>
+</div>
+<!-- Actions -->
+<div class="pt-lg flex items-center justify-end gap-md">
+<button class="px-md py-sm rounded-lg border border-outline-variant text-on-surface font-body-md text-body-md hover:bg-surface-container transition-colors" onclick="history.back()" type="button">
+                            Cancel
+                        </button>
+<button class="px-md py-sm rounded-lg bg-primary text-on-primary font-body-md text-body-md hover:bg-primary/90 transition-colors shadow-sm" type="submit">
+                            Save Habit
+                        </button>
+</div>
+</form>
+</section>
+<!-- Preview Section -->
+<aside class="w-full lg:w-80 sticky top-xl">
+<div class="glass-panel rounded-xl p-lg shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-md text-center">Live Preview</h3>
+<!-- The Habit Card Preview -->
+<div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+<div class="flex justify-between items-start mb-sm">
+<div class="bg-surface-container px-xs py-1 rounded-full font-label-caps text-label-caps text-on-surface-variant text-[10px]" id="previewCategoryChip">
+                                Category
+                            </div>
+<span class="material-symbols-outlined text-outline-variant text-sm">more_vert</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-xs truncate" id="previewTitle">Habit Name</h4>
+<div class="flex items-center gap-xs text-on-surface-variant mb-md">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-body-md text-body-md text-sm" id="previewGoal">Goal / freq</span>
+</div>
+<!-- Mock Progress -->
+<div class="w-full bg-surface-container-highest rounded-full h-1 mt-auto">
+<div class="bg-tertiary-container h-1 rounded-full w-0"></div>
+</div>
+</div>
+<div class="mt-lg p-md bg-surface-container-low rounded-lg border border-primary/10 relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full blur-xl"></div>
+<div class="flex items-start gap-sm relative z-10">
+<span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1;">colors_spark</span>
+<div>
+<p class="font-label-caps text-label-caps text-primary mb-1">AI Suggestion</p>
+<p class="font-body-md text-body-md text-sm text-on-surface-variant">Based on your goals, setting a reminder for 8:00 AM might improve consistency.</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<script>
+        function updatePreview() {
+            const name = document.getElementById('habitName').value || 'Habit Name';
+            const category = document.getElementById('category').value || 'Category';
+            const goal = document.getElementById('goal').value || 'Goal';
+            const freqRadio = document.querySelector('input[name="frequency"]:checked');
+            const freq = freqRadio ? freqRadio.value : '';
+
+            document.getElementById('previewTitle').textContent = name;
+            document.getElementById('previewCategoryChip').textContent = category;
+            
+            let goalText = goal;
+            if(freq) goalText += ` / ${freq.toLowerCase()}`;
+            document.getElementById('previewGoal').textContent = goalText !== 'Goal' ? goalText : 'Goal / freq';
+        }
+
+        document.getElementById('habitForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Form submission logic would go here
+            alert('Habit saved!');
+        });
+    </script>
+</body></html>

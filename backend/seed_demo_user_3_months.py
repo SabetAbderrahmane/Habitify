@@ -14,7 +14,7 @@ Run from backend/:
 
 Demo login:
 
-    thesis.demo@habitify.local
+    demo.habitify@gmail.com
     DemoPass123!
 """
 
@@ -28,7 +28,7 @@ from api.auth import hash_password
 from db import get_connection, init_db, seed_recommended_and_core_data
 
 
-DEMO_EMAIL = "thesis.demo.habitify@gmail.com"
+DEMO_EMAIL = "demo.habitify@gmail.com"
 DEMO_PASSWORD = "DemoPass123!"
 
 random.seed(42)

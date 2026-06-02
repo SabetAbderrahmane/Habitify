@@ -1,286 +1,260 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  FiArrowRight,
+  FiCheckCircle,
+  FiEye,
+  FiEyeOff,
+  FiLock,
+  FiMail,
+  FiShield,
+  FiZap,
+} from "react-icons/fi";
+
+import Badge from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 import { api } from "../lib/api";
-import { FiMail, FiLock, FiArrowRight, FiZap } from "react-icons/fi";
 
-
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
-
-function useTilt() {
-  const ref = useRef(null);
-  const [style, setStyle] = useState({});
-
-  const onMove = (e) => {
-    const el = ref.current;
-    if (!el) return;
-
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width; // 0..1
-    const py = (e.clientY - r.top) / r.height; // 0..1
-
-    const rx = clamp((0.5 - py) * 14, -10, 10);
-    const ry = clamp((px - 0.5) * 18, -12, 12);
-
-    setStyle({
-      transform: `perspective(1100px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`,
-    });
-  };
-
-  const onLeave = () => setStyle({ transform: "perspective(1100px) rotateX(0deg) rotateY(0deg)" });
-
-  return { ref, style, onMove, onLeave };
-}
+const featureCards = [
+  {
+    title: "Lapse-risk signals",
+    body: "Use your real habits and check-ins to surface risk context.",
+  },
+  {
+    title: "Daily reflections",
+    body: "Keep mood, energy, and notes connected to your habit history.",
+  },
+  {
+    title: "Private sessions",
+    body: "Sign in to keep your habit dashboard tied to your account.",
+  },
+];
 
 export default function Auth({ onAuthed }) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState("login"); // "login" | "signup"
-  const isSignup = mode === "signup";
-
+  const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [error, setError] = useState("");
 
-  const headline = useMemo(
-    () => (isSignup ? "Create your account" : "Welcome back"),
+  const isSignup = mode === "signup";
+  const hasExistingSession = Boolean(localStorage.getItem("access_token"));
+
+  const copy = useMemo(
+    () =>
+      isSignup
+        ? {
+            eyebrow: "Create your workspace",
+            title: "Start tracking with Habitify",
+            subtitle:
+              "Create an account to log habits, check in daily, and review your real trend history.",
+            submit: "Create account",
+          }
+        : {
+            eyebrow: "Welcome back",
+            title: "Sign in to Habitify",
+            subtitle:
+              "Continue to your dashboard, log today, and review your latest habit patterns.",
+            submit: "Sign in",
+          },
     [isSignup]
   );
 
-  const subtitle = useMemo(
-    () => (isSignup ? "Start building habits with AI support." : "Pick up your streak where you left off."),
-    [isSignup]
-  );
-
-  const tilt = useTilt();
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setErr("");
+  const submit = async (event) => {
+    event.preventDefault();
+    setError("");
     setBusy(true);
 
     try {
       if (isSignup) {
-        // Signup then auto-login
         await api.post("/signup", { email, password });
       }
 
-      const res = await api.post("/login", { email, password });
-      const token = res?.data?.access_token;
+      const response = await api.post("/login", { email, password });
+      const token = response?.data?.access_token;
 
-      if (!token) throw new Error("No token returned");
+      if (!token) {
+        throw new Error("No token returned");
+      }
 
       localStorage.setItem("access_token", token);
       onAuthed?.(token);
       navigate("/app", { replace: true });
-    } catch (error) {
-      const msg =
-        error?.response?.data?.detail ||
-        error?.message ||
+    } catch (err) {
+      const message =
+        err?.response?.data?.detail ||
+        err?.message ||
         "Something went wrong. Try again.";
-      setErr(msg);
+      setError(message);
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05060a] text-white">
-      {/* animated gradient backdrop */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-fuchsia-500/35 via-cyan-400/25 to-indigo-500/30 blur-3xl animate-[pulse_6s_ease-in-out_infinite]" />
-        <div className="absolute -bottom-40 right-[-120px] h-[520px] w-[520px] rounded-full bg-gradient-to-tr from-emerald-400/20 via-sky-500/20 to-purple-500/25 blur-3xl animate-[pulse_7s_ease-in-out_infinite]" />
-        <div className="absolute inset-0 opacity-[0.18] [background-image:radial-gradient(#ffffff_1px,transparent_1px)] [background-size:22px_22px]" />
-      </div>
-
-      {/* top brand bar */}
-      <div className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur">
-            <FiZap className="text-cyan-200" />
-          </div>
-          <div>
-            <div className="text-sm tracking-widest text-white/60">HABITIFY</div>
-            <div className="text-xs text-white/40">AI Habit Tracker</div>
-          </div>
-        </div>
-
-        <div className="hidden items-center gap-2 md:flex">
-          <span className="text-xs text-white/50">No credit card. Local-first.</span>
-          <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/70 ring-1 ring-white/15">
-            Beta
-          </span>
-        </div>
-      </div>
-
-      {/* center */}
-      <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 pb-16 pt-4 md:grid-cols-2 md:items-center">
-        {/* left marketing */}
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs text-white/75 ring-1 ring-white/15 backdrop-blur">
-            <FiZap className="text-cyan-200" />
-            Predict lapses. Keep streaks. Win days.
-          </div>
-
-          <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-            Build habits with
-            <span className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
-              {" "}
-              AI that actually helps
-            </span>
-            .
-          </h1>
-
-          <p className="max-w-xl text-base leading-relaxed text-white/65">
-            Habitify turns your daily check-ins into insights: streak momentum, risk-of-lapse predictions,
-            and personalized nudges that feel human—not spam.
-          </p>
-
-          <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
-            {[
-              { k: "Streak Engine", v: "visual + addictive" },
-              { k: "Lapse Predictor", v: "lightweight ML" },
-              { k: "Private by default", v: "your data stays yours" },
-            ].map((x) => (
-              <div
-                key={x.k}
-                className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 backdrop-blur"
-              >
-                <div className="text-sm font-medium">{x.k}</div>
-                <div className="mt-1 text-xs text-white/55">{x.v}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* right auth card */}
-        <div className="md:justify-self-end">
-          <div
-            ref={tilt.ref}
-            onMouseMove={tilt.onMove}
-            onMouseLeave={tilt.onLeave}
-            style={tilt.style}
-            className="group relative w-full max-w-md rounded-3xl bg-white/10 p-1 ring-1 ring-white/15 backdrop-blur-xl transition-transform duration-200"
-          >
-            {/* glow */}
-            <div className="pointer-events-none absolute inset-0 -z-10 rounded-3xl bg-gradient-to-tr from-cyan-400/15 via-fuchsia-400/10 to-indigo-400/15 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-            <div className="rounded-[22px] bg-[#0b0d14]/70 p-8">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-2xl font-semibold">{headline}</div>
-                  <div className="mt-1 text-sm text-white/55">{subtitle}</div>
-                </div>
-
-                <div className="flex rounded-full bg-white/5 p-1 ring-1 ring-white/10">
-                  <button
-                    onClick={() => setMode("login")}
-                    className={`rounded-full px-3 py-1 text-xs transition ${
-                      !isSignup ? "bg-white/15 text-white" : "text-white/60 hover:text-white"
-                    }`}
-                    type="button"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => setMode("signup")}
-                    className={`rounded-full px-3 py-1 text-xs transition ${
-                      isSignup ? "bg-white/15 text-white" : "text-white/60 hover:text-white"
-                    }`}
-                    type="button"
-                  >
-                    Sign up
-                  </button>
-                </div>
-              </div>
-
-              <form onSubmit={submit} className="mt-8 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs text-white/60">Email</label>
-                  <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10 focus-within:ring-cyan-300/40">
-                    <FiMail className="text-white/55" />
-                    <input
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-white/25"
-                      placeholder="you@domain.com"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs text-white/60">Password</label>
-
-                  <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10 focus-within:ring-fuchsia-300/35">
-                    <FiLock className="text-white/55" />
-
-                    <input
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-white/25"
-                      placeholder="••••••••"
-                      type={showPw ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() => setShowPw((v) => !v)}
-                      className="rounded-xl bg-white/5 px-3 py-1 text-xs text-white/70 ring-1 ring-white/10 hover:bg-white/10"
-                    >
-                      {showPw ? "Hide" : "Show"}
-                    </button>
-                  </div>
-
-                  <div className="text-[11px] text-white/35">
-                    Minimum 6 characters.
-                  </div>
-                </div>
-
-
-                {err ? (
-                  <div className="rounded-2xl bg-red-500/10 p-3 text-sm text-red-200 ring-1 ring-red-300/20">
-                    {err}
-                  </div>
-                ) : null}
-
-                <button
-                  disabled={busy}
-                  className="group relative mt-2 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-black transition active:scale-[0.99] disabled:opacity-70"
-                  type="submit"
-                >
-                  {/* shimmer */}
-                  <span className={`absolute inset-0 ${busy ? "opacity-100" : "opacity-0"} transition-opacity`}>
-                    <span className="absolute inset-0 -translate-x-full animate-[shimmer_1.1s_infinite] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.6),transparent)]" />
-                  </span>
-
-                  <span className="relative z-10 inline-flex items-center justify-center gap-2">
-                    {busy ? "Authenticating..." : isSignup ? "Create account" : "Enter Habitify"}
-                    <FiArrowRight />
-                  </span>
-
-                  <span className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.55),transparent_55%)]" />
-                </button>
-
-                <div className="pt-2 text-center text-xs text-white/45">
-                  By continuing you agree to our <span className="text-white/70">Terms</span> &{" "}
-                  <span className="text-white/70">Privacy</span>.
-                </div>
-              </form>
+    <main className="min-h-screen bg-[#f7fafc] text-slate-950">
+      <div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_460px] lg:items-center lg:px-8">
+        <section className="flex flex-col justify-center py-10 lg:py-16">
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#3337a6] text-white shadow-[0_14px_36px_rgba(51,55,166,0.22)]">
+              <FiZap aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Habitify
+              </p>
+              <p className="text-sm text-slate-500">AI habit tracker</p>
             </div>
           </div>
 
-          <div className="mt-4 text-center text-xs text-white/40">
-            Tip: Use <span className="text-white/70">a strong password</span> — we’ll add reset + OAuth later.
+          <div className="mt-12 max-w-2xl">
+            <Badge tone="indigo" className="mb-5">
+              Calm habit intelligence
+            </Badge>
+            <h1 className="text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl">
+              Build consistent habits with a dashboard that stays honest.
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
+              Habitify connects your logs, check-ins, streaks, and AI risk
+              predictions without inventing metrics. Sign in or create an
+              account to start from your real data.
+            </p>
           </div>
-        </div>
+
+          <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+            {featureCards.map((feature) => (
+              <Card key={feature.title} className="rounded-xl p-4">
+                <FiCheckCircle className="mb-3 text-[#3337a6]" aria-hidden="true" />
+                <h2 className="text-sm font-semibold text-slate-900">{feature.title}</h2>
+                <p className="mt-2 text-xs leading-5 text-slate-500">{feature.body}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <Card className="self-center rounded-3xl p-6 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <Badge tone="slate" className="mb-4">
+                {copy.eyebrow}
+              </Badge>
+              <h2 className="text-2xl font-semibold text-slate-950">{copy.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">{copy.subtitle}</p>
+            </div>
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 text-[#3337a6]">
+              <FiShield aria-hidden="true" />
+            </div>
+          </div>
+
+          <div
+            className="mt-7 grid grid-cols-2 rounded-xl bg-slate-100 p-1"
+            role="tablist"
+            aria-label="Authentication mode"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!isSignup}
+              onClick={() => setMode("login")}
+              className={`rounded-lg px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-4 focus:ring-[#3337a6]/20 ${
+                !isSignup ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={isSignup}
+              onClick={() => setMode("signup")}
+              className={`rounded-lg px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-4 focus:ring-[#3337a6]/20 ${
+                isSignup ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Sign up
+            </button>
+          </div>
+
+          <form onSubmit={submit} className="mt-7 space-y-5">
+            <div>
+              <label htmlFor="auth-email" className="text-sm font-semibold text-slate-700">
+                Email
+              </label>
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-[#3337a6] focus-within:ring-4 focus-within:ring-[#3337a6]/10">
+                <FiMail className="text-slate-400" aria-hidden="true" />
+                <input
+                  id="auth-email"
+                  className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="auth-password" className="text-sm font-semibold text-slate-700">
+                Password
+              </label>
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-[#3337a6] focus-within:ring-4 focus-within:ring-[#3337a6]/10">
+                <FiLock className="text-slate-400" aria-hidden="true" />
+                <input
+                  id="auth-password"
+                  className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Minimum 6 characters"
+                  autoComplete={isSignup ? "new-password" : "current-password"}
+                  minLength={6}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+                </button>
+              </div>
+            </div>
+
+            {error ? (
+              <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            ) : null}
+
+            <Button type="submit" size="lg" className="w-full" disabled={busy}>
+              {busy ? "Please wait..." : copy.submit}
+              <FiArrowRight aria-hidden="true" />
+            </Button>
+
+            {hasExistingSession ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                onClick={() => navigate("/app", { replace: true })}
+              >
+                Continue to app
+              </Button>
+            ) : null}
+          </form>
+
+          <p className="mt-6 text-center text-xs leading-5 text-slate-500">
+            By continuing, you agree to use Habitify with your own account data.
+          </p>
+        </Card>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,0 +1,207 @@
+{
+  "total_requests": 1025,
+  "successful_requests": 1025,
+  "failed_requests": 0,
+  "endpoints": {
+    "/checkins": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 40.35,
+      "p50_ms": 37.52,
+      "p95_ms": 87.55,
+      "max_ms": 97.04
+    },
+    "/core-habits": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 8.92,
+      "p50_ms": 7.08,
+      "p95_ms": 26.76,
+      "max_ms": 29.83
+    },
+    "/export/data": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 89.71,
+      "p50_ms": 91.08,
+      "p95_ms": 175.99,
+      "max_ms": 179.81
+    },
+    "/habits/": {
+      "count": 75,
+      "ok": 75,
+      "failed": 0,
+      "status_counts": {
+        "200": 75
+      },
+      "avg_ms": 39.35,
+      "p50_ms": 40.57,
+      "p95_ms": 68.46,
+      "max_ms": 77.97
+    },
+    "/habits/ list-helper": {
+      "count": 75,
+      "ok": 75,
+      "failed": 0,
+      "status_counts": {
+        "200": 75
+      },
+      "avg_ms": 0,
+      "p50_ms": 0,
+      "p95_ms": 0,
+      "max_ms": 0
+    },
+    "/habits/logs": {
+      "count": 550,
+      "ok": 550,
+      "failed": 0,
+      "status_counts": {
+        "200": 550
+      },
+      "avg_ms": 49.74,
+      "p50_ms": 48.91,
+      "p95_ms": 86.43,
+      "max_ms": 104.75
+    },
+    "/login": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 106.3,
+      "p50_ms": 87.06,
+      "p95_ms": 257.34,
+      "max_ms": 269.27
+    },
+    "/login-token-read": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 0,
+      "p50_ms": 0,
+      "p95_ms": 0,
+      "max_ms": 0
+    },
+    "/notifications/generate": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 51.38,
+      "p50_ms": 52.13,
+      "p95_ms": 87.21,
+      "max_ms": 87.24
+    },
+    "/notifications/pending": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 63.08,
+      "p50_ms": 60.24,
+      "p95_ms": 132.03,
+      "max_ms": 132.78
+    },
+    "/nudges/today": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 40.99,
+      "p50_ms": 35.54,
+      "p95_ms": 87.51,
+      "max_ms": 89.04
+    },
+    "/predictions/lapse-risk": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 85.97,
+      "p50_ms": 80.94,
+      "p95_ms": 191.32,
+      "max_ms": 205.57
+    },
+    "/profile/onboarding": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 33.64,
+      "p50_ms": 27.82,
+      "p95_ms": 80.33,
+      "max_ms": 82.63
+    },
+    "/recommended/goals": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 12.93,
+      "p50_ms": 7.23,
+      "p95_ms": 49.81,
+      "max_ms": 56.6
+    },
+    "/signup": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 124.92,
+      "p50_ms": 119.56,
+      "p95_ms": 255.86,
+      "max_ms": 262.96
+    },
+    "/status": {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "status_counts": {
+        "200": 25
+      },
+      "avg_ms": 91.86,
+      "p50_ms": 72.68,
+      "p95_ms": 233.94,
+      "max_ms": 234.2
+    }
+  },
+  "config": {
+    "base_url": "http://127.0.0.1:8000",
+    "users": 25,
+    "concurrency": 10,
+    "loops": 3
+  },
+  "elapsed_seconds": 5.96,
+  "requests_per_second": 172.12
+}

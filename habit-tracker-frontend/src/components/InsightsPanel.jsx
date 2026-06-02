@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { fetchLapseRisk } from "../lib/predictions";
+import { useMemo, useState } from "react";
+import Badge from "./ui/Badge";
+import Button from "./ui/Button";
+import Card from "./ui/Card";
+import ProgressBar from "./ui/ProgressBar";
+import Skeleton from "./ui/Skeleton";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -25,7 +29,8 @@ function isoKey(d) {
   return d.toISOString().slice(0, 10);
 }
 
-export default function InsightsPanel({ habits, logs, predictions, goodThreshold = 70 }) {
+export default function InsightsPanel({ habits, logs, predictions, contextCorrelations, loading = false, goodThreshold = 70 }) {
+  const [expanded, setExpanded] = useState({ nudge: true, patterns: false, context: false });
   const insights = useMemo(() => {
     const list = (logs || [])
       .map((l) => ({
@@ -126,12 +131,27 @@ export default function InsightsPanel({ habits, logs, predictions, goodThreshold
     };
   }, [logs, goodThreshold, predictions]);
 
+  if (loading) {
+    return (
+      <Card>
+        <Skeleton className="h-8 w-56" />
+        <div className="mt-5 grid gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-28" />
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
+  const contextAvailable = Boolean(contextCorrelations?.available);
+
   return (
-    <div className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
+    <Card className="border-indigo-100 bg-white">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <div className="text-lg font-semibold">AI Insights v2</div>
-          <div className="mt-1 text-sm text-white/55">
+          <div className="text-lg font-semibold text-slate-950">AI Insights</div>
+          <div className="mt-1 text-sm text-slate-600">
             Real-time hybrid ML-based lapse prediction
           </div>
         </div>
@@ -151,51 +171,111 @@ export default function InsightsPanel({ habits, logs, predictions, goodThreshold
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/10">
-          <div className="text-sm text-white/60">Best days</div>
-          <div className="mt-2 text-2xl font-semibold">
+        <InsightCard
+          title="Best days"
+          open={expanded.patterns}
+          onToggle={() => setExpanded((prev) => ({ ...prev, patterns: !prev.patterns }))}
+        >
+          <div className="text-2xl font-semibold text-slate-950">
             {insights.bestDays?.length ? insights.bestDays.join(" & ") : "—"}
           </div>
-          <div className="mt-2 text-sm text-white/45">
+          <div className="mt-2 text-sm leading-6 text-slate-600">
             Schedule harder habits on your best days for higher success.
           </div>
-        </div>
+        </InsightCard>
 
-        <div className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/10">
-          <div className="text-sm text-white/60">Smart nudge (ML)</div>
-          <div className="mt-2 text-sm leading-relaxed text-white/80">{insights.nudge}</div>
-          <div className="mt-3 text-xs text-white/40">
+        <InsightCard
+          title="Smart nudge (ML)"
+          open={expanded.nudge}
+          onToggle={() => setExpanded((prev) => ({ ...prev, nudge: !prev.nudge }))}
+          glow
+        >
+          <div className="text-sm leading-6 text-slate-700">{insights.nudge}</div>
+          <div className="mt-3 text-xs text-slate-500">
             Predictions powered by Hybrid LSTM-Tabular Model.
           </div>
-        </div>
+        </InsightCard>
       </div>
-    </div>
+
+      {contextAvailable ? (
+        <InsightCard
+          title="Sleep and weather context"
+          open={expanded.context}
+          onToggle={() => setExpanded((prev) => ({ ...prev, context: !prev.context }))}
+          className="mt-5"
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <ContextBuckets title="Sleep bands" buckets={contextCorrelations.completion_rate_by_sleep_band} />
+            <ContextBuckets title="Weather" buckets={contextCorrelations.completion_rate_by_weather} />
+          </div>
+        </InsightCard>
+      ) : null}
+    </Card>
   );
 }
 
 function Metric({ title, value, sub }) {
   return (
-    <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-      <div className="text-sm text-white/60">{title}</div>
-      <div className="mt-2 text-3xl font-semibold">{value}</div>
-      <div className="mt-1 text-xs text-white/45">{sub}</div>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <div className="text-sm font-semibold text-slate-500">{title}</div>
+      <div className="mt-2 text-3xl font-semibold text-slate-950">{value}</div>
+      <div className="mt-1 text-xs text-slate-500">{sub}</div>
     </div>
   );
 }
 
 function RiskPill({ label, score }) {
-  const cls =
+  const tone =
     score < 25
-      ? "bg-emerald-400/20 text-emerald-200 ring-emerald-300/20"
+      ? "green"
       : score < 55
-      ? "bg-yellow-400/20 text-yellow-200 ring-yellow-300/20"
+      ? "amber"
       : score < 80
-      ? "bg-orange-400/20 text-orange-200 ring-orange-300/20"
-      : "bg-red-500/20 text-red-200 ring-red-300/20";
+      ? "amber"
+      : "red";
 
   return (
-    <div className={`rounded-full px-3 py-1 text-xs ring-1 ${cls}`}>
+    <Badge tone={tone}>
       {label} • {score}%
+    </Badge>
+  );
+}
+
+function InsightCard({ title, open, onToggle, children, glow = false, className = "" }) {
+  return (
+    <div className={[
+      "rounded-2xl border bg-white p-4",
+      glow ? "border-indigo-100 shadow-[0_0_12px_rgba(51,55,166,0.14)]" : "border-slate-200",
+      className,
+    ].join(" ")}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-semibold text-slate-600">{title}</div>
+        <Button size="sm" variant="ghost" onClick={onToggle} aria-expanded={open}>
+          {open ? "Collapse" : "Expand"}
+        </Button>
+      </div>
+      {open ? <div className="mt-3">{children}</div> : null}
+    </div>
+  );
+}
+
+function ContextBuckets({ title, buckets = {} }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="text-sm font-semibold text-slate-700">{title}</div>
+      <div className="mt-4 space-y-3">
+        {Object.entries(buckets).map(([key, value]) => (
+          <div key={key}>
+            <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+              <span>{key}</span>
+              <span>
+                {value.completion_rate == null ? "More samples needed" : `${value.completion_rate}%`}
+              </span>
+            </div>
+            <ProgressBar value={value.completion_rate || 0} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
