@@ -23,47 +23,47 @@ const LoginSignupForm = ({ setAuthenticated }) => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-purple-600 to-blue-600">
-      <div className="w-full max-w-sm bg-white p-8 rounded-lg shadow-xl transform transition duration-500 hover:scale-105 hover:rotate-1">
-        <h2 className="text-4xl font-semibold text-center text-gray-800">{isSignup ? 'Sign Up' : 'Log In'}</h2>
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-surface-soft)] px-4">
+      <div className="w-full max-w-sm rounded-[24px] border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+        <h2 className="text-center text-3xl font-semibold text-[var(--color-text-primary)]">{isSignup ? 'Sign Up' : 'Log In'}</h2>
 
         <form onSubmit={handleSubmit} className="mt-8">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-2 p-3 w-full rounded-lg bg-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-3 text-[var(--color-text-primary)] transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3337a6]/20"
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)]">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="mt-2 p-3 w-full rounded-lg bg-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] p-3 text-[var(--color-text-primary)] transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3337a6]/20"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300"
+            className="w-full rounded-xl bg-[var(--color-accent)] py-3 font-semibold text-white transition duration-300 hover:bg-[#272b86]"
           >
             {isSignup ? 'Sign Up' : 'Log In'}
           </button>
         </form>
 
         <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[var(--color-text-secondary)]">
             {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
             <span
               onClick={() => setIsSignup(!isSignup)}
-              className="text-blue-500 cursor-pointer hover:underline"
+              className="cursor-pointer text-[var(--color-accent)] hover:underline"
             >
               {isSignup ? 'Log In' : 'Sign Up'}
             </span>

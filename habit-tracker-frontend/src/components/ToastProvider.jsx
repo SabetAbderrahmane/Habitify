@@ -41,19 +41,19 @@ export function useToast() {
 }
 
 function Toast({ toast }) {
-  const base = "w-[320px] rounded-2xl p-4 ring-1 backdrop-blur bg-black/60";
+  const base = "w-[320px] rounded-2xl border bg-[var(--color-surface)] p-4 shadow-[0_18px_42px_rgba(15,23,42,0.14)]";
   const typeCls =
     toast.type === "success"
-      ? "ring-emerald-300/20 text-emerald-100"
+      ? "border-emerald-200 text-emerald-800"
       : toast.type === "error"
-      ? "ring-red-300/20 text-red-100"
-      : "ring-white/15 text-white";
+      ? "border-red-200 text-red-700"
+      : "border-[var(--color-border)] text-[var(--color-text-primary)]";
 
   return (
     <div className={`${base} ${typeCls}`}>
       <div className="text-sm font-semibold">{toast.title}</div>
       {toast.message ? (
-        <div className="mt-1 text-sm opacity-80">{toast.message}</div>
+        <div className="mt-1 text-sm text-[var(--color-text-secondary)]">{toast.message}</div>
       ) : null}
     </div>
   );

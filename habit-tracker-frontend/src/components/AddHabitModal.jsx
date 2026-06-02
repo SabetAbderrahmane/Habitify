@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FiClock, FiX } from "react-icons/fi";
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
-import Card from "./ui/Card";
 import ProgressBar from "./ui/ProgressBar";
 
 const FAV_KEY = "habitify:favorites";
+const CATEGORIES = ["Health", "Productivity", "Mindfulness", "Relationships", "Other"];
 
 function loadFavs() {
   try {
@@ -27,22 +28,17 @@ function saveFavs(favs) {
 export default function AddHabitModal({ open, onClose, onCreate, habitNames = [] }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Other");
+  const [frequency, setFrequency] = useState("daily");
   const [progress, setProgress] = useState(0);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-
-  const CATEGORIES = ["Health", "Productivity", "Mindfulness", "Relationships", "Other"];
-
-  // Templates
   const [query, setQuery] = useState("");
   const [favs, setFavs] = useState(() => loadFavs());
-
   const nameInputRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
-    // Reset template search when opening
     setQuery("");
     setTimeout(() => nameInputRef.current?.focus?.(), 0);
   }, [open]);
@@ -60,51 +56,34 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
     saveFavs(favs);
   }, [favs]);
 
-  const canSubmit = useMemo(() => name.trim().length >= 2 && !busy, [name, busy]);
-
-  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
-
   const normalizedNames = useMemo(() => {
-    // unique + sorted
     const set = new Set((habitNames || []).filter(Boolean));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [habitNames]);
 
   const filteredNames = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return normalizedNames;
-    return normalizedNames.filter((n) => n.toLowerCase().includes(q));
+    const source = q ? normalizedNames.filter((n) => n.toLowerCase().includes(q)) : normalizedNames;
+    return source.slice(0, 10);
   }, [normalizedNames, query]);
 
-  const favSet = useMemo(() => new Set(favs), [favs]);
-
-  const favoriteNames = useMemo(() => {
-    return favs
-      .filter((n) => normalizedNames.includes(n))
-      .sort((a, b) => a.localeCompare(b));
-  }, [favs, normalizedNames]);
-
-  const toggleFav = (n) => {
-    setFavs((prev) => {
-      const s = new Set(prev);
-      if (s.has(n)) s.delete(n);
-      else s.add(n);
-      return Array.from(s);
-    });
-  };
+  const canSubmit = name.trim().length >= 2 && !busy;
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   if (!open) return null;
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const submit = async (event) => {
+    event.preventDefault();
     setErr("");
     setBusy(true);
     try {
-      await onCreate?.({ 
-        name: name.trim(), 
+      await onCreate?.({
+        name: name.trim(),
         category,
-        progress: Number(progress), 
-        date 
+        frequency,
+        target: frequency === "daily" ? "Daily" : frequency === "weekly" ? "Weekly" : "Custom",
+        progress: Number(progress),
+        date,
       });
       setName("");
       setProgress(0);
@@ -117,18 +96,11 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
     }
   };
 
-  const useTemplate = (n) => {
-    setName(n);
-    // keep date/progress as-is
-    setTimeout(() => nameInputRef.current?.focus?.(), 0);
-  };
-
-  const quickLogToday = async (n) => {
+  const quickLogToday = async (templateName) => {
     setErr("");
     setBusy(true);
     try {
-      // Default “quick log” at 10% (feels like a “start”)
-      await onCreate?.({ name: n, progress: 10, date: todayISO });
+      await onCreate?.({ name: templateName, category, frequency, progress: 10, date: todayISO });
       onClose?.();
     } catch (error) {
       setErr(error?.message || "Failed to log today");
@@ -137,214 +109,176 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
     }
   };
 
+  const toggleFav = (templateName) => {
+    setFavs((prev) => {
+      const set = new Set(prev);
+      if (set.has(templateName)) set.delete(templateName);
+      else set.add(templateName);
+      return Array.from(set);
+    });
+  };
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="add-habit-title">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-3xl bg-white p-1 shadow-2xl ring-1 ring-slate-200">
-        <div className="rounded-[22px] bg-[#f7fafc] p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 id="add-habit-title" className="text-xl font-semibold text-slate-950">Add a new habit</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Use templates to log faster. Pin your favorites.
-              </p>
-            </div>
+    <div className="fixed inset-0 z-50 overflow-auto bg-[#f7fafc] p-6" role="dialog" aria-modal="true" aria-labelledby="add-habit-title">
+      <div className="mx-auto max-w-[1440px]">
+        <button
+          type="button"
+          onClick={onClose}
+          className="mb-8 inline-flex items-center gap-2 text-sm font-bold tracking-[0.12em] text-[#181c1e]"
+        >
+          <FiX />
+          Cancel
+        </button>
 
-            <Button onClick={onClose} variant="secondary" size="sm">
-              Close
-            </Button>
-          </div>
+        <div className="mb-12">
+          <h2 id="add-habit-title" className="text-5xl font-semibold tracking-[-0.02em] text-[#3337a6]">New Habit</h2>
+          <p className="mt-3 text-xl text-[#464653]">Define a new routine to track.</p>
+        </div>
 
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="text-sm font-semibold text-slate-800">Templates</div>
+        <div className="grid gap-14 lg:grid-cols-[1fr_400px]">
+          <form onSubmit={submit} className="rounded-3xl bg-white p-8 shadow-[0_12px_36px_rgba(24,28,30,0.05)]">
+            <div className="space-y-9">
+              <label className="block">
+                <span className="text-sm font-bold tracking-[0.12em] text-[#181c1e]">Habit Name</span>
+                <input
+                  ref={nameInputRef}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  className="mt-4 w-full border-0 border-b border-[#e0e3e5] bg-transparent px-4 py-3 text-2xl text-[#181c1e] outline-none placeholder:text-[#b8c0c8] focus:border-[#3337a6]"
+                  placeholder="e.g., Morning Meditation"
+                  required
+                  minLength={2}
+                />
+              </label>
 
-              <input
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10 md:max-w-sm"
-                placeholder="Search habits… (e.g., read, gym, study)"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
+              <label className="block">
+                <span className="text-sm font-bold tracking-[0.12em] text-[#181c1e]">Category</span>
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  className="mt-4 w-full border-0 border-b border-[#e0e3e5] bg-transparent px-0 py-4 text-xl text-[#181c1e] outline-none focus:border-[#3337a6]"
+                >
+                  {CATEGORIES.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            {normalizedNames.length === 0 ? (
-              <div className="mt-3 text-sm text-slate-500">
-                No templates yet. Create a habit once and it will appear here.
-              </div>
-            ) : (
-              <>
-                {favoriteNames.length > 0 ? (
-                  <div className="mt-4">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Pinned</div>
-                    <div className="flex flex-wrap gap-2">
-                      {favoriteNames.map((n) => (
-                        <TemplateChip
-                          key={n}
-                          name={n}
-                          pinned
-                          disabled={busy}
-                          onUse={() => useTemplate(n)}
-                          onQuickLog={() => quickLogToday(n)}
-                          onTogglePin={() => toggleFav(n)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                <div className="mt-4">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    {query.trim() ? "Results" : "All templates"}
-                  </div>
-
-                  <div className="max-h-56 space-y-2 overflow-auto pr-1">
-                    {filteredNames.slice(0, 40).map((n) => (
-                      <div
-                        key={n}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50"
-                      >
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-slate-950">{n}</div>
-                          <div className="text-xs text-slate-500">
-                            {favSet.has(n) ? "Pinned" : "Not pinned"} • Quick log uses today
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => toggleFav(n)}
-                            className={`rounded-lg px-3 py-1 text-xs font-semibold ring-1 ${
-                              favSet.has(n)
-                                ? "bg-[#3337a6] text-white ring-[#3337a6]"
-                                : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
-                            }`}
-                            title={favSet.has(n) ? "Unpin" : "Pin"}
-                          >
-                            {favSet.has(n) ? "Pinned" : "Pin"}
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => useTemplate(n)}
-                            className="rounded-lg bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-                          >
-                            Use
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => quickLogToday(n)}
-                            className="rounded-lg bg-[#3337a6] px-3 py-1 text-xs font-semibold text-white"
-                          >
-                            Log Today
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {filteredNames.length > 40 ? (
-                        <div className="pt-2 text-xs text-slate-500">
-                        Showing first 40 results. Refine search to narrow down.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <Card className="mt-6">
-            <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-500">Live preview</div>
-                <div className="mt-2 text-lg font-semibold text-slate-950">
-                  {name.trim() || "New habit"}
+                <div className="mb-5 text-sm font-bold tracking-[0.12em] text-[#181c1e]">Frequency</div>
+                <div className="grid gap-5 md:grid-cols-3">
+                  {[
+                    { value: "daily", label: "Daily" },
+                    { value: "weekly", label: "Weekly" },
+                    { value: "custom", label: "Custom" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setFrequency(option.value)}
+                      className={[
+                        "h-14 rounded-lg border text-xl font-medium transition",
+                        frequency === option.value
+                          ? "border-[#181c1e] bg-white text-[#181c1e]"
+                          : "border-[#c7c5d5] bg-white text-[#181c1e]",
+                      ].join(" ")}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="mt-1 text-sm text-slate-500">{date} • {category}</div>
               </div>
-              <Badge tone={Number(progress) >= 80 ? "green" : Number(progress) > 0 ? "amber" : "slate"}>
-                {Number(progress || 0)}%
-              </Badge>
-            </div>
-            <ProgressBar value={Number(progress || 0)} className="mt-4" />
-          </Card>
 
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Habit name</label>
-              <input
-                ref={nameInputRef}
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10"
-                placeholder="e.g., Read 10 pages"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                minLength={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Category</label>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategory(cat)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ring-1 ${
-                      category === cat
-                        ? "bg-[#3337a6] text-white ring-[#3337a6]"
-                        : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              <div className="grid gap-8 md:grid-cols-2">
+                <label className="block">
+                  <span className="text-sm font-bold tracking-[0.12em] text-[#181c1e]">Goal ({frequency === "daily" ? "Daily" : "Routine"})</span>
+                  <input
+                    value={progress}
+                    onChange={(event) => setProgress(event.target.value)}
+                    type="number"
+                    min={0}
+                    max={100}
+                    className="mt-4 w-full border-0 border-b border-[#e0e3e5] bg-transparent px-4 py-3 text-xl text-[#181c1e] outline-none focus:border-[#3337a6]"
+                    placeholder="e.g., 10 mins, 2 liters"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-bold tracking-[0.12em] text-[#181c1e]">Start Date</span>
+                  <input
+                    value={date}
+                    onChange={(event) => setDate(event.target.value)}
+                    type="date"
+                    className="mt-4 w-full border-0 border-b border-[#e0e3e5] bg-transparent px-4 py-3 text-xl text-[#181c1e] outline-none focus:border-[#3337a6]"
+                  />
+                </label>
               </div>
-            </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Progress (%)</label>
+              <div className="rounded-2xl border border-[#e0e3e5] bg-[#f7fafc] p-5">
+                <div className="mb-3 text-sm font-bold tracking-[0.12em] text-[#181c1e]">Existing Templates</div>
                 <input
-                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={progress}
-                  onChange={(e) => setProgress(e.target.value)}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="mb-4 w-full rounded-lg border border-[#e0e3e5] bg-white px-4 py-2 text-sm outline-none focus:border-[#3337a6]"
+                  placeholder="Search saved habit names"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Date</label>
-                <input
-                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
+                {filteredNames.length === 0 ? (
+                  <div className="text-sm text-[#767684]">No templates yet. Create a habit once and it will appear here.</div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {filteredNames.map((templateName) => (
+                      <TemplateChip
+                        key={templateName}
+                        name={templateName}
+                        pinned={favs.includes(templateName)}
+                        disabled={busy}
+                        onUse={() => setName(templateName)}
+                        onQuickLog={() => quickLogToday(templateName)}
+                        onTogglePin={() => toggleFav(templateName)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
             {err ? (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {err}
-              </div>
+              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>
             ) : null}
 
-            <Button
-              disabled={!canSubmit}
-              type="submit"
-              className="w-full"
-              size="lg"
-            >
-              {busy ? "Creating..." : "Create habit"}
-            </Button>
+            <div className="mt-9 flex justify-end gap-5">
+              <Button type="button" variant="secondary" size="lg" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" size="lg" disabled={!canSubmit}>
+                {busy ? "Saving..." : "Save Habit"}
+              </Button>
+            </div>
           </form>
+
+          <aside className="rounded-3xl border border-[#e0e3e5] bg-white p-8 shadow-[0_12px_36px_rgba(24,28,30,0.05)]">
+            <div className="mb-6 text-center text-sm font-bold tracking-[0.14em] text-[#181c1e]">Live Preview</div>
+            <div className="rounded-2xl bg-white p-5 shadow-[0_8px_24px_rgba(24,28,30,0.08)]">
+              <div className="mb-5 flex items-center justify-between">
+                <Badge tone="slate">{category}</Badge>
+                <span className="text-xl tracking-[0.16em] text-[#c7c5d5]">⋮</span>
+              </div>
+              <div className="text-3xl font-semibold tracking-[-0.01em] text-[#181c1e]">{name.trim() || "Habit Name"}</div>
+              <div className="mt-4 flex items-center gap-2 text-base text-[#181c1e]">
+                <FiClock />
+                {frequency} / {date}
+              </div>
+              <ProgressBar value={Number(progress || 0)} className="mt-6" />
+            </div>
+
+            <div className="mt-8 rounded-2xl border border-[#c7c5d5] bg-[#f1f4f6] p-5">
+              <div className="mb-3 text-sm font-bold tracking-[0.12em] text-[#1117a8]">AI Suggestion</div>
+              <p className="text-lg leading-7 text-[#181c1e]">
+                Based on your goals, setting a reminder for a consistent time may improve completion.
+              </p>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
@@ -353,36 +287,14 @@ export default function AddHabitModal({ open, onClose, onCreate, habitNames = []
 
 function TemplateChip({ name, pinned, disabled, onUse, onQuickLog, onTogglePin }) {
   return (
-    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-      <div className="max-w-[180px] truncate text-sm font-semibold text-slate-950">{name}</div>
-
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onTogglePin}
-        className={`rounded-lg px-2 py-1 text-xs font-semibold ring-1 ${
-          pinned ? "bg-[#3337a6] text-white ring-[#3337a6]" : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
-        }`}
-        title={pinned ? "Unpin" : "Pin"}
-      >
+    <div className="inline-flex items-center gap-2 rounded-full border border-[#e0e3e5] bg-white px-3 py-2 text-sm">
+      <button type="button" disabled={disabled} onClick={onUse} className="font-semibold text-[#181c1e]">
+        {name}
+      </button>
+      <button type="button" disabled={disabled} onClick={onTogglePin} className="text-xs font-bold text-[#3337a6]">
         {pinned ? "Pinned" : "Pin"}
       </button>
-
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onUse}
-        className="rounded-lg bg-white px-2 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-      >
-        Use
-      </button>
-
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onQuickLog}
-        className="rounded-lg bg-[#3337a6] px-2 py-1 text-xs font-semibold text-white"
-      >
+      <button type="button" disabled={disabled} onClick={onQuickLog} className="rounded-full bg-[#3337a6] px-3 py-1 text-xs font-bold text-white">
         Today
       </button>
     </div>

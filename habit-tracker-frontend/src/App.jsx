@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import CalendarPage from "./pages/CalendarPage";
 import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
 import HabitDetail from "./pages/HabitDetail";
 import HabitLibrary from "./pages/HabitLibrary";
 import RecommendedPage from "./pages/RecommendedPage";
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="insights" element={<InsightsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="library" element={<HabitLibrary />} />
           <Route path="recommended" element={<RecommendedPage />} />
           <Route path="core" element={<CoreHabitsPage />} />
@@ -76,6 +78,7 @@ export default function App() {
         <Route path="/notifications" element={<Navigate to="/app/notifications" replace />} />
         <Route path="/alerts" element={<Navigate to="/app/notifications" replace />} />
         <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+        <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </NotificationsProvider>

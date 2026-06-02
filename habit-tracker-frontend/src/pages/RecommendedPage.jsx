@@ -197,7 +197,7 @@ export default function RecommendedPage() {
             <button
               onClick={() => addSuggestedHabit(habit)}
               disabled={busyName === habit.name}
-              className="mt-5 w-full rounded-xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
+              className="mt-5 w-full rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(51,55,166,0.16)] disabled:opacity-60"
               type="button"
             >
               {busyName === habit.name ? "Adding..." : "Add to My Habits"}

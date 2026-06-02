@@ -1,61 +1,70 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { FiRefreshCw } from "react-icons/fi";
 import InsightsPanel from "../components/InsightsPanel";
 import { useHabits } from "../context/HabitsContext";
 import { fetchLapseRisk } from "../lib/predictions";
-import { fetchContextCorrelations } from "../lib/analytics";
-import ExportReportButton from "../components/ExportReportButton";
-import PageHeader from "../components/ui/PageHeader";
+import Button from "../components/ui/Button";
 
 export default function InsightsPage() {
-  const { habitDefinitions, habitLogs } = useHabits();
+  const { habitDefinitions, habitLogs, allHabitLogs } = useHabits();
   const [predictions, setPredictions] = useState([]);
-  const [contextCorrelations, setContextCorrelations] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [riskFilter, setRiskFilter] = useState("all");
+
+  const logsForInsights = useMemo(() => {
+    return Array.isArray(allHabitLogs) && allHabitLogs.length ? allHabitLogs : habitLogs;
+  }, [allHabitLogs, habitLogs]);
+
+  const loadInsights = async ({ quiet = false } = {}) => {
+    if (quiet) setRefreshing(true);
+    else setLoading(true);
+    setError("");
+
+    try {
+      const riskData = await fetchLapseRisk();
+      setPredictions(Array.isArray(riskData) ? riskData : []);
+    } catch (err) {
+      setPredictions([]);
+      setError(err?.response?.data?.detail || err?.message || "Failed to load lapse-risk predictions.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const [riskData, contextData] = await Promise.all([
-          fetchLapseRisk(),
-          fetchContextCorrelations().catch(() => null),
-        ]);
-        if (!alive) return;
-        setPredictions(Array.isArray(riskData) ? riskData : []);
-        setContextCorrelations(contextData);
-      } catch (e) {
-        console.error("Failed to load predictions", e);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [habitDefinitions]);
+    loadInsights();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habitDefinitions.length]);
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow="AI wellness insights"
-        title="Signals that help you stay consistent"
-        description="Predictions and patterns are derived from logged habits, check-ins, and the existing ML endpoint."
-        actions={
-          <ExportReportButton 
-          habits={habitDefinitions} 
-          logs={habitLogs} 
-          predictions={predictions} 
-        />
-        }
-      />
+      <header className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-accent)]">AI INSIGHTS</div>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] md:text-4xl">
+            Wellness Intelligence
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+            Model-based habit risk signals and explainable recommendations.
+          </p>
+        </div>
 
-      <InsightsPanel 
-        habits={habitDefinitions} 
-        logs={habitLogs} 
-        predictions={predictions} 
-        contextCorrelations={contextCorrelations}
+        <Button variant="secondary" onClick={() => loadInsights({ quiet: true })} disabled={loading || refreshing}>
+          <FiRefreshCw />
+          {refreshing ? "Refreshing..." : "Refresh insights"}
+        </Button>
+      </header>
+
+      <InsightsPanel
+        logs={logsForInsights}
+        predictions={predictions}
         loading={loading}
+        error={error}
+        riskFilter={riskFilter}
+        onRiskFilterChange={setRiskFilter}
       />
     </div>
   );

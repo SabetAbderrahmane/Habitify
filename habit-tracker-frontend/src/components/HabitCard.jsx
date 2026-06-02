@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { FiEdit3, FiEye, FiPlusCircle, FiTrash2 } from "react-icons/fi";
 import EditHabitModal from "./EditHabitModal";
+import HabitActionsMenu from "./HabitActionsMenu";
 import Badge from "./ui/Badge";
-import Button from "./ui/Button";
 import Card from "./ui/Card";
 import ProgressBar from "./ui/ProgressBar";
 
@@ -24,36 +25,20 @@ export default function HabitCard({ habit, onUpdate, onDelete, onBumpToday }) {
             </Link>
           </div>
 
-          <Badge tone={tone}>{p}%</Badge>
+          <div className="flex items-center gap-2">
+            <Badge tone={tone}>{p}%</Badge>
+            <HabitActionsMenu
+              actions={[
+                { label: "View details", to: href, LinkComponent: Link, icon: FiEye },
+                onBumpToday ? { label: "+10% today", onClick: () => onBumpToday(habit), icon: FiPlusCircle } : null,
+                onUpdate ? { label: "Edit habit", onClick: () => setOpenEdit(true), icon: FiEdit3 } : null,
+                onDelete ? { label: "Delete", onClick: () => onDelete(habit), icon: FiTrash2, danger: true } : null,
+              ]}
+            />
+          </div>
         </div>
 
         <ProgressBar value={p} tone={p >= 80 ? "green" : p > 0 ? "amber" : "indigo"} className="mt-4" />
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setOpenEdit(true)}
-          >
-            Edit
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => onBumpToday?.(habit)}
-          >
-            +10% today
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete?.(habit)}
-            className="text-red-700 hover:bg-red-50"
-          >
-            Delete
-          </Button>
-        </div>
       </Card>
 
       <EditHabitModal

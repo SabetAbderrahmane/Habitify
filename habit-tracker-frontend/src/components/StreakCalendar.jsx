@@ -27,11 +27,11 @@ function intensity(progress) {
 }
 
 const LEVELS = [
-  "bg-slate-100 ring-slate-200",
-  "bg-cyan-100 ring-cyan-200",
-  "bg-cyan-300 ring-cyan-300",
-  "bg-fuchsia-400 ring-fuchsia-300",
-  "bg-indigo-600 ring-indigo-500",
+  "bg-[#eef1f3] ring-[#e0e3e5]",
+  "bg-[#dfe1ff] ring-[#c9ccff]",
+  "bg-[#bfc3ff] ring-[#aeb3f7]",
+  "bg-[#767bd6] ring-[#686dce]",
+  "bg-[#3337a6] ring-[#3337a6]",
 ];
 
 const RANGE_OPTIONS = [
@@ -41,11 +41,12 @@ const RANGE_OPTIONS = [
   { key: "6m", label: "Last 6 months", days: 30 * 6 }, // approximate
 ];
 
-export default function StreakCalendar({ habits }) {
+export default function StreakCalendar({ habits, mode = "expanded", title = "Activity Map" }) {
   const [hover, setHover] = useState(null);
   const hasLogs = (habits || []).some((habit) => habit?.date);
+  const compact = mode === "compact";
 
-  const [range, setRange] = useState("12w");
+  const [range, setRange] = useState(compact ? "12w" : "12w");
   const [showMode, setShowMode] = useState("all"); // all | completed | struggling
   const [metric, setMetric] = useState("max"); // max | avg
 
@@ -154,17 +155,20 @@ export default function StreakCalendar({ habits }) {
   }, [showMode]);
 
   return (
-    <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[0_10px_30px_rgba(24,28,30,0.04)]">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <div className="text-lg font-semibold text-[var(--color-text-primary)]">Streak Calendar</div>
-          <div className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            {legendLabel} • {heatMode === "count" ? "Count/day" : metric === "avg" ? "Avg/day" : "Max/day"} •{" "}
-            {dayFilter === "all" ? "All days" : dayFilter === "weekdays" ? "Weekdays" : "Weekends"} • {range.toUpperCase()}
-          </div>
+          <div className="text-2xl font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">{title}</div>
+          {!compact ? (
+            <div className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              {legendLabel} • {heatMode === "count" ? "Count/day" : metric === "avg" ? "Avg/day" : "Max/day"} •{" "}
+              {dayFilter === "all" ? "All days" : dayFilter === "weekdays" ? "Weekdays" : "Weekends"} • {range.toUpperCase()}
+            </div>
+          ) : null}
         </div>
 
         {/* Filters */}
+        {!compact ? (
         <div className="flex flex-wrap items-center gap-3">
           {/* Range segmented */}
           <Segmented
@@ -223,8 +227,14 @@ export default function StreakCalendar({ habits }) {
             ]}
           />
         </div>
+        ) : (
+          <span className="rounded-lg bg-[#ebeef0] px-3 py-1 text-xs font-semibold tracking-[0.08em] text-[#181c1e]">
+            Last 3 Months
+          </span>
+        )}
       </div>
 
+      {!compact ? (
       <div className="mt-4 flex items-center justify-between gap-4 text-xs text-[var(--color-text-muted)]">
         <div>{`Rendering ${totalDays} days (whole weeks)`}</div>
         <div className="flex items-center gap-2">
@@ -235,6 +245,7 @@ export default function StreakCalendar({ habits }) {
           <span>More</span>
         </div>
       </div>
+      ) : null}
 
       {!hasLogs ? (
         <div className="mt-5 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-soft)] p-6 text-center">
@@ -245,10 +256,13 @@ export default function StreakCalendar({ habits }) {
         </div>
       ) : null}
 
-      <div className="mt-5 overflow-x-auto">
-        <div className="min-w-[720px]">
+      <div className={compact ? "mt-7 overflow-x-auto" : "mt-5 overflow-x-auto"}>
+        <div className={compact ? "w-max" : "w-max min-w-[620px]"}>
           {/* Month labels */}
-          <div className="mb-2 grid gap-2 text-xs font-medium text-[var(--color-text-muted)]" style={{ gridTemplateColumns: `28px repeat(${weeks.length}, 1fr)` }}>
+          <div
+            className={compact ? "mb-2 grid gap-1 text-[11px] font-medium text-[var(--color-text-muted)]" : "mb-2 grid gap-1 text-xs font-medium text-[var(--color-text-muted)]"}
+            style={{ gridTemplateColumns: `${compact ? "26px" : "30px"} repeat(${weeks.length}, ${compact ? "14px" : "18px"})` }}
+          >
             <div />
             {labels.map((m, i) => (
               <div key={i} className="pl-1">{m}</div>
@@ -256,23 +270,26 @@ export default function StreakCalendar({ habits }) {
           </div>
 
           {/* Grid */}
-          <div className="grid gap-2" style={{ gridTemplateColumns: `28px repeat(${weeks.length}, 1fr)` }}>
+          <div
+            className="grid gap-1"
+            style={{ gridTemplateColumns: `${compact ? "26px" : "30px"} repeat(${weeks.length}, ${compact ? "14px" : "18px"})` }}
+          >
             {/* Weekday labels */}
-            <div className="grid grid-rows-7 gap-2 text-xs font-medium text-[var(--color-text-muted)]">
+            <div className={compact ? "grid grid-rows-7 gap-1 text-[11px] font-medium text-[var(--color-text-muted)]" : "grid grid-rows-7 gap-1 text-xs font-medium text-[var(--color-text-muted)]"}>
               {["Mon", "", "Wed", "", "Fri", "", "Sun"].map((d, i) => (
-                <div key={i} className="h-4 leading-4">{d}</div>
+                <div key={i} className={compact ? "h-3.5 leading-[14px]" : "h-[18px] leading-[18px]"}>{d}</div>
               ))}
             </div>
 
             {weeks.map((col, cIdx) => (
-              <div key={cIdx} className="grid grid-rows-7 gap-2">
+              <div key={cIdx} className="grid grid-rows-7 gap-1">
                 {col.map((cell, rIdx) => (
                   <button
                     key={rIdx}
                     type="button"
                     onMouseEnter={() => setHover(cell)}
                     onMouseLeave={() => setHover(null)}
-                    className={`h-4 w-4 rounded-[4px] ring-1 transition ${LEVELS[cell.lvl]} hover:scale-110`}
+                    className={`${compact ? "h-3.5 w-3.5" : "h-[18px] w-[18px]"} rounded-[4px] ring-1 transition ${LEVELS[cell.lvl]} hover:scale-110`}
                     title={`${cell.iso} • ${cell.prog}%`}
                   />
                 ))}
@@ -300,10 +317,20 @@ export default function StreakCalendar({ habits }) {
               ) : null}
             </div>
           ) : (
-            <div className="mt-4 text-sm text-[var(--color-text-muted)]">Hover a day to see details.</div>
+            !compact ? <div className="mt-4 text-sm text-[var(--color-text-muted)]">Hover a day to see details.</div> : null
           )}
         </div>
       </div>
+
+      {compact ? (
+        <div className="mt-6 flex items-center justify-end gap-2 text-sm text-[var(--color-text-secondary)]">
+          <span>Less</span>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <span key={i} className={`h-3.5 w-3.5 rounded-[4px] ring-1 ${LEVELS[i]}`} />
+          ))}
+          <span>More</span>
+        </div>
+      ) : null}
     </div>
   );
 }

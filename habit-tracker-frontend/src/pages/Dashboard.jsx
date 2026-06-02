@@ -1,54 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { FiActivity, FiCheckCircle, FiPlus, FiRefreshCw, FiTarget } from "react-icons/fi";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import StreakCalendar from "../components/StreakCalendar";
-import InsightsPanel from "../components/InsightsPanel";
+import { FiCheckCircle, FiPlus } from "react-icons/fi";
 import AddHabitModal from "../components/AddHabitModal";
-import HabitCard from "../components/HabitCard";
-import ConfirmDialog from "../components/ConfirmDialog";
-import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
+import GlobalSearchButton from "../components/GlobalSearchButton";
+import NotificationsButton from "../components/NotificationsButton";
 import EmptyState from "../components/ui/EmptyState";
-import FilterBar from "../components/ui/FilterBar";
-import PageHeader from "../components/ui/PageHeader";
 import { SkeletonGrid } from "../components/ui/Skeleton";
-import StatCard from "../components/ui/StatCard";
 import { useHabits } from "../context/HabitsContext";
 import { useToast } from "../components/ToastProvider";
-import { fetchCoreHabits } from "../lib/content";
-import { fetchTodayNudges } from "../lib/nudges";
-import { fetchLapseRisk } from "../lib/predictions";
-import { 
-  fetchAllHabitLogs,
-  fetchHabitNames, 
-  updateHabitDefinition,
-  deleteHabitLog
-} from "../lib/habits";
+import { fetchHabitNames } from "../lib/habits";
 
-function missedTwoDays(habits, habitName) {
-  const today = new Date();
-  const targetDates = [];
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
 
-  for (let i = 1; i <= 2; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    targetDates.push(d.toISOString().slice(0, 10));
-  }
+function clamp(value) {
+  return Math.max(0, Math.min(100, Number(value || 0)));
+}
 
-  return targetDates.every((date) => {
-    return !habits.some(
-      (h) => h.name === habitName && h.date === date && Number(h.progress || 0) > 0
-    );
-  });
+function initials(name = "") {
+  return String(name)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "H";
 }
 
 export default function Dashboard() {
@@ -56,170 +32,26 @@ export default function Dashboard() {
     habitDefinitions,
     habitLogs,
     selectedDate,
-    setSelectedDate,
     loading: loadingHabits,
     error: habitsError,
     refreshData,
     addHabit,
     updateProgress,
   } = useHabits();
-
   const toast = useToast();
 
-  const [nudges, setNudges] = useState([]);
-  const [predictions, setPredictions] = useState([]);
   const [open, setOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState(null);
   const [habitNames, setHabitNames] = useState([]);
-  const [coreHabits, setCoreHabits] = useState([]);
-  const [allLogs, setAllLogs] = useState([]);
-  const [range, setRange] = useState("7");
-  const [optimisticProgress, setOptimisticProgress] = useState({});
+  const [busyId, setBusyId] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchLapseRisk();
-        setPredictions(Array.isArray(data) ? data : []);
-      } catch {
-        setPredictions([]);
-      }
-    })();
-  }, []);
-
-  // filters
-  const [q, setQ] = useState("");
-  const [dateFilter, setDateFilter] = useState("all"); // all | today | week | month
-  const [statusFilter, setStatusFilter] = useState("all"); // all | completed | struggling
-  const [sort, setSort] = useState("dateDesc"); // dateDesc | dateAsc | progressDesc | progressAsc
-
-  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const weekAgoISO = useMemo(
-    () => new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString().slice(0, 10),
-    []
-  );
-  const monthAgoISO = useMemo(
-    () => new Date(Date.now() - 29 * 24 * 3600 * 1000).toISOString().slice(0, 10),
-    []
-  );
-
-  const stats = useMemo(() => {
-    const total = habitDefinitions.length;
-    const loggedToday = habitLogs.length;
-    const completed = habitLogs.filter((h) => Number(h.progress || 0) >= 80).length;
-    const avg = total
-      ? Math.round(habitLogs.reduce((a, h) => a + Number(h.progress || 0), 0) / Math.max(1, habitLogs.length))
-      : 0;
-    const best = total ? Math.max(...habitLogs.map((h) => Number(h.progress || 0))) : 0;
-    return { total, loggedToday, completed, avg, best };
-  }, [habitDefinitions.length, habitLogs]);
-
-  const missedCoreHabits = useMemo(() => {
-    return coreHabits.filter((habit) => missedTwoDays(habitLogs, habit.name));
-  }, [habitLogs, coreHabits]);
-
-  const filteredHabits = useMemo(() => {
-    let arr = habitLogs;
-
-    const s = q.trim().toLowerCase();
-    if (s) arr = arr.filter((h) => (h.name || "").toLowerCase().includes(s));
-
-    if (dateFilter === "today") arr = arr.filter((h) => h.date === todayISO);
-    if (dateFilter === "week") arr = arr.filter((h) => h.date >= weekAgoISO);
-    if (dateFilter === "month") arr = arr.filter((h) => h.date >= monthAgoISO);
-
-    if (statusFilter === "completed") {
-      arr = arr.filter((h) => Number(h.progress || 0) >= 80);
-    }
-
-    if (statusFilter === "struggling") {
-      arr = arr.filter(
-        (h) => Number(h.progress || 0) > 0 && Number(h.progress || 0) <= 30
-      );
-    }
-
-    const byDate = (a, b) => (a.date || "").localeCompare(b.date || "");
-    const byProg = (a, b) => Number(a.progress || 0) - Number(b.progress || 0);
-
-    if (sort === "dateAsc") arr = [...arr].sort(byDate);
-    if (sort === "dateDesc") arr = [...arr].sort((a, b) => byDate(b, a));
-    if (sort === "progressAsc") arr = [...arr].sort(byProg);
-    if (sort === "progressDesc") arr = [...arr].sort((a, b) => byProg(b, a));
-
-    return arr.map((habit) => {
-      const key = habit.habit_id || habit.id;
-      const override = optimisticProgress[key];
-      return override === undefined ? habit : { ...habit, progress: override };
-    });
-  }, [habitLogs, q, dateFilter, statusFilter, sort, todayISO, weekAgoISO, monthAgoISO, optimisticProgress]);
-
-  const chartData = useMemo(() => {
-    const days = Number(range);
-    const start = new Date();
-    start.setDate(start.getDate() - (days - 1));
-    const byDate = new Map();
-
-    for (let i = 0; i < days; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
-      byDate.set(iso, { date: iso.slice(5), fullDate: iso, progress: 0, logs: 0 });
-    }
-
-    allLogs.forEach((log) => {
-      if (!byDate.has(log.date)) return;
-      const bucket = byDate.get(log.date);
-      bucket.progress += Number(log.progress || 0);
-      bucket.logs += 1;
-    });
-
-    return [...byDate.values()].map((item) => ({
-      ...item,
-      progress: item.logs ? Math.round(item.progress / item.logs) : 0,
-    }));
-  }, [allLogs, range]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchCoreHabits();
-        setCoreHabits(Array.isArray(data) ? data : []);
-      } catch (e) {
-        setCoreHabits([]);
-      }
-    })();
-  }, []);
-
-  const refreshAllLogs = async () => {
-    try {
-      const data = await fetchAllHabitLogs();
-      setAllLogs(Array.isArray(data) ? data : []);
-    } catch {
-      setAllLogs([]);
-    }
-  };
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchTodayNudges();
-        setNudges(Array.isArray(data) ? data : []);
-      } catch (e) {
-        setNudges([]);
-      }
-    })();
-  }, []);
+  const day = selectedDate || todayISO();
 
   useEffect(() => {
     (async () => {
       try {
         await refreshData();
       } catch {
-        toast.error(
-          "Failed to load habits",
-          "Check if backend is running on 127.0.0.1:8000"
-        );
+        toast.error("Failed to load habits", "Check if backend is running on 127.0.0.1:8000");
       }
 
       try {
@@ -228,344 +60,175 @@ export default function Dashboard() {
       } catch {
         setHabitNames([]);
       }
-      await refreshAllLogs();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const refreshNudges = async () => {
-    try {
-      const data = await fetchTodayNudges();
-      setNudges(Array.isArray(data) ? data : []);
-    } catch {
-      setNudges([]);
-    }
-  };
+  const focusRows = useMemo(() => {
+    const logMap = new Map();
+    (habitLogs || [])
+      .filter((log) => log.date === day)
+      .forEach((log) => {
+        const key = log.habit_id || log.name;
+        const current = logMap.get(key);
+        if (!current || Number(log.progress || 0) >= Number(current.progress || 0)) {
+          logMap.set(key, log);
+        }
+        if (log.name) logMap.set(log.name, log);
+      });
+
+    return (habitDefinitions || []).map((habit) => {
+      const log = logMap.get(habit.id) || logMap.get(habit.name);
+      const progress = clamp(log?.progress);
+      return {
+        ...habit,
+        logId: log?.id,
+        date: log?.date || day,
+        progress,
+        completed: progress >= 80,
+      };
+    });
+  }, [day, habitDefinitions, habitLogs]);
+
+  const completedCount = focusRows.filter((habit) => habit.completed).length;
+  const totalCount = focusRows.length;
+  const remaining = Math.max(0, totalCount - completedCount);
+  const percent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
 
   const onCreate = async (habit) => {
+    await addHabit(habit);
+    await refreshData();
     try {
-      await addHabit(habit);
-      await refreshData();
-      await refreshAllLogs();
-      await refreshNudges();
-      toast.success("Habit added", habit.name);
-
-      try {
-        const names = await fetchHabitNames();
-        setHabitNames(Array.isArray(names) ? names : []);
-      } catch {
-        // ignore
-      }
-    } catch (e) {
-      toast.error("Could not add habit", e?.message || "Unknown error");
-      throw e;
+      const names = await fetchHabitNames();
+      setHabitNames(Array.isArray(names) ? names : []);
+    } catch {
+      // ignore template refresh failures
     }
+    toast.success("Habit added", habit.name);
   };
 
-  const requestDelete = (habit) => {
-    setPendingDelete(habit);
-    setConfirmOpen(true);
-  };
+  const logHabit = async (habit) => {
+    const habitId = habit.id || habit.habit_id;
+    if (!habitId) {
+      toast.error("Habit definition not found");
+      return;
+    }
 
-  const confirmDelete = async () => {
-    if (!pendingDelete) return;
-
+    setBusyId(String(habitId));
     try {
-      // In this context, we are deleting a log entry
-      await deleteHabitLog(pendingDelete.id);
+      const next = habit.completed ? 100 : Math.max(80, habit.progress || 0);
+      await updateProgress(habitId, next, day);
       await refreshData();
-      await refreshAllLogs();
-      await refreshNudges();
-      toast.success("Deleted log entry", pendingDelete.name);
-    } catch (e) {
-      toast.error("Delete failed", e?.message || "Unknown error");
+      toast.success("Habit logged", `${habit.name} • ${next}%`);
+    } catch (error) {
+      toast.error("Could not log habit", error?.message || "Unknown error");
     } finally {
-      setConfirmOpen(false);
-      setPendingDelete(null);
-    }
-  };
-
-  const handleUpdate = async (habit, patch) => {
-    try {
-      // If it's a habit definition update (name change), we update the definition
-      // If it's a progress update, we update the log
-      let updated;
-      if (patch.progress !== undefined) {
-        updated = await updateProgress(habit.habit_id || habit.id, patch.progress, habit.date);
-      } else {
-        // Assume other patches are definition updates
-        updated = await updateHabitDefinition(habit.habit_id || habit.id, patch);
-      }
-      
-      await refreshData();
-      await refreshAllLogs();
-      await refreshNudges();
-      toast.success("Saved", `${updated.name || habit.name} • ${updated.progress || patch.progress}%`);
-    } catch (e) {
-      toast.error("Update failed", e?.message || "Unknown error");
-      throw e;
-    }
-  };
-
-  const handleBumpToday = async (habit) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const habitId = habit.habit_id || habit.id;
-    const previous = Number(habit.progress || 0);
-    const next = Math.min(100, Number(previous || 0) + 10);
-
-    try {
-      setOptimisticProgress((prev) => ({ ...prev, [habitId]: next }));
-      await updateProgress(habitId, next, today);
-      await refreshData();
-      await refreshAllLogs();
-      await refreshNudges();
-      setOptimisticProgress((prev) => {
-        const copy = { ...prev };
-        delete copy[habitId];
-        return copy;
-      });
-      toast.success("Logged today", `${habit.name} • ${next}%`);
-    } catch (e) {
-      setOptimisticProgress((prev) => ({ ...prev, [habitId]: previous }));
-      toast.error("Bump failed", e?.message || "Unknown error");
+      setBusyId("");
     }
   };
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Dashboard overview"
-        title="Your habit cockpit"
-        description="Track progress, review real nudges, and log the next small win from one calm workspace."
-        actions={
-          <>
-            <label className="sr-only" htmlFor="dashboard-date">Selected date</label>
-            <input
-              id="dashboard-date"
-              type="date"
-              value={selectedDate}
-              onChange={(event) => setSelectedDate(event.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#3337a6] focus:ring-4 focus:ring-[#3337a6]/10"
-            />
-            <Button
-              variant="secondary"
-            onClick={async () => {
-              await refreshData();
-              await refreshAllLogs();
-              await refreshNudges();
-            }}
-          >
-              <FiRefreshCw aria-hidden="true" />
-              Refresh
-            </Button>
-            <Button onClick={() => setOpen(true)}>
-              <FiPlus aria-hidden="true" />
-              Add Habit
-            </Button>
-          </>
-        }
-      />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Active habits" value={stats.total} sub="From your library" icon={FiTarget} />
-        <StatCard label="Logged today" value={stats.loggedToday} sub={selectedDate} icon={FiCheckCircle} tone="green" />
-        <StatCard label="Average progress" value={`${stats.avg}%`} sub="Selected day" icon={FiActivity} tone="slate" />
-        <StatCard label="Best entry" value={`${stats.best}%`} sub="Selected day" icon={FiActivity} tone="amber" />
+    <div>
+      <div className="mb-14 flex items-center justify-end gap-6">
+        <GlobalSearchButton />
+        <NotificationsButton />
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex h-11 items-center gap-2 rounded-full bg-[#3337a6] px-6 text-sm font-bold tracking-[0.08em] text-white shadow-[0_14px_30px_rgba(51,55,166,0.16)]"
+        >
+          <FiPlus />
+          Add Habit
+        </button>
+        <div className="grid h-11 w-11 place-items-center rounded-full bg-[#195864] font-bold text-white">A</div>
       </div>
 
-      {nudges.length > 0 ? (
-        <Card>
-          <div className="text-lg font-semibold text-slate-950">Today’s nudges</div>
-          <div className="mt-2 text-sm text-slate-600">
-            Small prompts based on your recent activity.
+      <section className="mx-auto max-w-[960px] text-center">
+        <div className="mx-auto grid h-[188px] w-[188px] place-items-center rounded-full bg-[conic-gradient(#3337a6_var(--progress),#e0e3e5_0)] p-3" style={{ "--progress": `${percent}%` }}>
+          <div className="grid h-full w-full place-items-center rounded-full bg-[#f7fafc]">
+            <div>
+              <div className="text-3xl font-bold text-[#3337a6]">{percent}%</div>
+              <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-[#464653]">Today</div>
+            </div>
           </div>
+        </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {nudges.map((n) => (
-              <div
-                key={n.id}
-                className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-4"
-              >
-                <div className="text-sm font-semibold text-[#3337a6]">{n.title}</div>
-                <div className="mt-2 text-sm leading-6 text-slate-700">{n.message}</div>
+        <h1 className="mt-9 text-4xl font-semibold tracking-[-0.02em] text-[#181c1e] md:text-5xl">
+          {completedCount} down, {remaining} to go.
+        </h1>
+        <p className="mx-auto mt-4 max-w-2xl text-xl leading-8 text-[#464653]">
+          You&apos;re building solid momentum today. Keep the focus sharp.
+        </p>
+      </section>
 
-                {n.action ? (
-                  <Button
-                    as={Link}
-                    to={n.action.path}
-                    variant="secondary"
-                    size="sm"
-                    className="mt-4"
-                  >
-                    {n.action.label}
-                  </Button>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </Card>
-      ) : null}
+      <section className="mx-auto mt-12 max-w-[960px]">
+        <div className="mb-7 text-sm font-bold tracking-[0.12em] text-[#767684]">Today&apos;s Focus</div>
 
-      {missedCoreHabits.length > 0 ? (
-        <Card className="border-amber-200 bg-amber-50">
-          <div className="text-lg font-semibold text-amber-950">
-            Friendly reminders
-          </div>
-          <div className="mt-2 text-sm leading-6 text-amber-900">
-            You missed these core habits for 2 days. A small step today can restart
-            momentum.
-          </div>
+        {habitsError ? (
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{habitsError}</div>
+        ) : null}
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {missedCoreHabits.map((habit) => (
-              <span
-                key={habit.name}
-                className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-200"
-              >
-                {habit.name}
-              </span>
-            ))}
-          </div>
-        </Card>
-      ) : null}
-
-      <Card>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-lg font-semibold text-slate-950">Progress trend</div>
-            <div className="mt-1 text-sm text-slate-600">Average logged progress from real habit logs.</div>
-          </div>
-          <div className="flex rounded-xl bg-slate-100 p-1">
-            {["7", "14", "30"].map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setRange(item)}
+        {loadingHabits ? (
+          <SkeletonGrid count={3} />
+        ) : focusRows.length === 0 ? (
+          <EmptyState
+            title="No habits in your focus list"
+            description="Create your first habit and it will appear here for daily tracking."
+            actionLabel="Add Habit"
+            onAction={() => setOpen(true)}
+          />
+        ) : (
+          <div className="space-y-5">
+            {focusRows.map((habit) => (
+              <article
+                key={habit.id || habit.name}
                 className={[
-                  "rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#3337a6]/20",
-                  range === item ? "bg-white text-[#3337a6] shadow-sm" : "text-slate-600",
+                  "flex min-h-[134px] items-center gap-6 rounded-3xl px-8 py-6 shadow-[0_8px_24px_rgba(24,28,30,0.04)] transition",
+                  habit.completed
+                    ? "border border-[#c6ecc6] bg-[#c6ecc6]"
+                    : "border border-[#e0e3e5] bg-white",
                 ].join(" ")}
               >
-                {item}d
-              </button>
+                <div className={["grid h-[58px] w-[58px] shrink-0 place-items-center rounded-full text-xl font-bold", habit.completed ? "bg-[#dff5df] text-[#2d4e32]" : "bg-[#e5e9eb] text-[#39485c]"].join(" ")}>
+                  {initials(habit.name)}
+                </div>
+
+                <div className="min-w-0 flex-1 text-left">
+                  <div className={["text-3xl font-semibold tracking-[-0.01em]", habit.completed ? "text-[#123a18]" : "text-[#181c1e]"].join(" ")}>
+                    {habit.name}
+                  </div>
+                  <div className="mt-2 text-lg text-[#464653]">{habit.target || habit.category || "Daily habit"}</div>
+                </div>
+
+                {habit.completed ? (
+                  <div className="flex items-center gap-4 text-sm font-bold tracking-[0.08em] text-[#2d4e32]">
+                    <span>Completed</span>
+                    <div className="grid h-[58px] w-[58px] place-items-center rounded-full bg-white">
+                      <FiCheckCircle className="h-7 w-7" />
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={busyId === String(habit.id)}
+                    onClick={() => logHabit(habit)}
+                    className="inline-flex h-14 items-center gap-3 rounded-full bg-[#3337a6] px-8 text-base font-bold tracking-[0.08em] text-white shadow-[0_12px_24px_rgba(51,55,166,0.18)] disabled:opacity-60"
+                  >
+                    <span className="h-4 w-4 rounded-full border-2 border-[#eef1f3]" />
+                    {busyId === String(habit.id) ? "Logging" : "Log"}
+                  </button>
+                )}
+              </article>
             ))}
           </div>
-        </div>
-        <div className="mt-5 h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="progressFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#3337a6" stopOpacity={0.18} />
-                  <stop offset="95%" stopColor="#3337a6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="#e5e7eb" vertical={false} />
-              <XAxis dataKey="date" tickLine={false} axisLine={false} />
-              <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
-              <Tooltip
-                formatter={(value) => [`${value}%`, "Average progress"]}
-                labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
-              />
-              <Area type="monotone" dataKey="progress" stroke="#3337a6" strokeWidth={2} fill="url(#progressFill)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
-      <FilterBar
-        search={q}
-        onSearch={setQ}
-        resultText={`Showing ${filteredHabits.length} of ${habitLogs.length}`}
-        filters={[
-          {
-            label: "Date range",
-            value: dateFilter,
-            onChange: setDateFilter,
-            options: [
-              { value: "all", label: "All dates" },
-              { value: "today", label: "Today" },
-              { value: "week", label: "Last 7 days" },
-              { value: "month", label: "Last 30 days" },
-            ],
-          },
-          {
-            label: "Status",
-            value: statusFilter,
-            onChange: setStatusFilter,
-            options: [
-              { value: "all", label: "All status" },
-              { value: "completed", label: "Completed" },
-              { value: "struggling", label: "Struggling" },
-            ],
-          },
-          {
-            label: "Sort",
-            value: sort,
-            onChange: setSort,
-            options: [
-              { value: "dateDesc", label: "Newest first" },
-              { value: "dateAsc", label: "Oldest first" },
-              { value: "progressDesc", label: "Highest progress" },
-              { value: "progressAsc", label: "Lowest progress" },
-            ],
-          },
-        ]}
-      />
-
-      <InsightsPanel habits={habitDefinitions} logs={habitLogs} predictions={predictions} />
-      <StreakCalendar habits={habitLogs} />
-
-      {habitsError ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {habitsError}
-        </div>
-      ) : null}
-
-      {loadingHabits ? (
-        <SkeletonGrid count={6} />
-      ) : filteredHabits.length === 0 ? (
-        <EmptyState
-          title="No habit logs match this view"
-          description="Adjust filters or add a habit log for the selected date."
-          actionLabel="Add Habit"
-          onAction={() => setOpen(true)}
-        />
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredHabits.map((h, idx) => (
-            <HabitCard
-              key={h.id || `${h.name}-${h.date}-${idx}`}
-              habit={h}
-              onUpdate={handleUpdate}
-              onDelete={requestDelete}
-              onBumpToday={handleBumpToday}
-            />
-          ))}
-        </div>
-      )}
+        )}
+      </section>
 
       <AddHabitModal
         open={open}
         onClose={() => setOpen(false)}
         onCreate={onCreate}
         habitNames={habitNames}
-      />
-
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Delete this habit entry?"
-        message={
-          pendingDelete
-            ? `This will remove: "${pendingDelete.name}" on ${pendingDelete.date}.`
-            : "This action cannot be undone."
-        }
-        confirmText="Delete"
-        onCancel={() => {
-          setConfirmOpen(false);
-          setPendingDelete(null);
-        }}
-        onConfirm={confirmDelete}
       />
     </div>
   );

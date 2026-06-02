@@ -215,7 +215,7 @@ export default function RecoveryPage() {
             <button
               type="button"
               onClick={() => setUrgeOpen(true)}
-              className="rounded-xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-black"
+              className="rounded-xl bg-[var(--color-accent)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(51,55,166,0.16)]"
             >
               I have an urge right now
             </button>

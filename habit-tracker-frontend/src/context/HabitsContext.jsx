@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { 
   fetchHabitDefinitions, 
   fetchHabitLogs, 
+  fetchAllHabitLogs,
   createHabitDefinition,
   logHabitProgress 
 } from "../lib/habits";
@@ -11,6 +12,7 @@ const HabitsContext = createContext(null);
 export function HabitsProvider({ token, children }) {
   const [habitDefinitions, setHabitDefinitions] = useState([]);
   const [habitLogs, setHabitLogs] = useState([]);
+  const [allHabitLogs, setAllHabitLogs] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [loading, setLoading] = useState(false);
@@ -21,16 +23,32 @@ export function HabitsProvider({ token, children }) {
     setLoading(true);
     setError("");
     try {
-      const [defs, logs] = await Promise.all([
+      const [defs, logs, history] = await Promise.all([
         fetchHabitDefinitions(),
-        fetchHabitLogs(date || selectedDate)
+        fetchHabitLogs(date || selectedDate),
+        fetchAllHabitLogs()
       ]);
       setHabitDefinitions(defs);
       setHabitLogs(logs);
+      setAllHabitLogs(Array.isArray(history) ? history : []);
     } catch (e) {
       setError(e?.message || "Failed to load habit data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshAllHabitLogs = async () => {
+    if (!token) return [];
+    try {
+      setError("");
+      const history = await fetchAllHabitLogs();
+      const normalized = Array.isArray(history) ? history : [];
+      setAllHabitLogs(normalized);
+      return normalized;
+    } catch (e) {
+      setError(e?.message || "Failed to load habit history");
+      throw e;
     }
   };
 
@@ -75,6 +93,14 @@ export function HabitsProvider({ token, children }) {
       }
       return [...prev, updatedLog];
     });
+
+    setAllHabitLogs((prev) => {
+      const exists = prev.find(l => l.habit_id === habitId && l.date === logDate);
+      if (exists) {
+        return prev.map(l => (l.id === updatedLog.id ? updatedLog : l));
+      }
+      return [...prev, updatedLog];
+    });
     
     return updatedLog;
   };
@@ -83,6 +109,7 @@ export function HabitsProvider({ token, children }) {
     if (!token) {
       setHabitDefinitions([]);
       setHabitLogs([]);
+      setAllHabitLogs([]);
       return;
     }
     refreshData();
@@ -94,15 +121,17 @@ export function HabitsProvider({ token, children }) {
       habits: habitDefinitions, // alias for legacy code
       habitDefinitions, 
       habitLogs, 
+      allHabitLogs,
       selectedDate,
       setSelectedDate,
       loading, 
       error, 
       refreshData, 
+      refreshAllHabitLogs,
       addHabit,
       updateProgress
     }),
-    [habitDefinitions, habitLogs, selectedDate, loading, error]
+    [habitDefinitions, habitLogs, allHabitLogs, selectedDate, loading, error]
   );
 
   return <HabitsContext.Provider value={value}>{children}</HabitsContext.Provider>;

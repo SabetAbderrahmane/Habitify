@@ -1,268 +1,264 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiBookOpen, FiCheckCircle, FiClock, FiTarget } from "react-icons/fi";
+import { FiCheckCircle, FiEye, FiSearch } from "react-icons/fi";
 import { useHabits } from "../context/HabitsContext";
 import { fetchAllHabitLogs } from "../lib/habits";
 import { useToast } from "../components/ToastProvider";
+import HabitActionsMenu from "../components/HabitActionsMenu";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
-import FilterBar from "../components/ui/FilterBar";
-import PageHeader from "../components/ui/PageHeader";
-import ProgressBar from "../components/ui/ProgressBar";
 import { SkeletonGrid } from "../components/ui/Skeleton";
-import StatCard from "../components/ui/StatCard";
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function computeCurrentStreak(logs) {
+  const byDate = new Map(logs.map((log) => [log.date, Number(log.progress || 0)]));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if ((byDate.get(key) || 0) >= 80) streak += 1;
+    else break;
+  }
+  return streak;
+}
 
 export default function HabitLibrary() {
-  const { habitDefinitions } = useHabits();
+  const { habitDefinitions, updateProgress, refreshData } = useHabits();
   const toast = useToast();
 
   const [allLogs, setAllLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
-  const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("name");
+  const [busyId, setBusyId] = useState("");
+
+  const loadLogs = async () => {
+    setLoadingLogs(true);
+    try {
+      const data = await fetchAllHabitLogs();
+      setAllLogs(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setAllLogs([]);
+      toast.error("Failed to load habit history", error?.message || "Unknown error");
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
 
   useEffect(() => {
-    let alive = true;
-
-    async function loadLogs() {
-      setLoadingLogs(true);
-
-      try {
-        const data = await fetchAllHabitLogs();
-        if (alive) {
-          setAllLogs(Array.isArray(data) ? data : []);
-        }
-      } catch (e) {
-        if (alive) {
-          setAllLogs([]);
-          toast.error("Failed to load habit history", e?.message || "Unknown error");
-        }
-      } finally {
-        if (alive) {
-          setLoadingLogs(false);
-        }
-      }
-    }
-
     loadLogs();
-
-    return () => {
-      alive = false;
-    };
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const library = useMemo(() => {
     return (habitDefinitions || []).map((habit) => {
-      const logs = (allLogs || []).filter((log) => {
-        return log.habit_id === habit.id || log.name === habit.name;
-      });
-
-      const sortedLogs = [...logs].sort((a, b) =>
-        String(a.date || "").localeCompare(String(b.date || ""))
-      );
-
-      const avg = sortedLogs.length
-        ? Math.round(
-            sortedLogs.reduce((sum, log) => {
-              return sum + Number(log.progress || 0);
-            }, 0) / sortedLogs.length
-          )
+      const logs = (allLogs || [])
+        .filter((log) => log.habit_id === habit.id || log.name === habit.name)
+        .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+      const avg = logs.length
+        ? Math.round(logs.reduce((sum, log) => sum + Number(log.progress || 0), 0) / logs.length)
         : 0;
-
-      const last = sortedLogs[sortedLogs.length - 1];
-
+      const last = logs[logs.length - 1];
       return {
         id: habit.id,
         name: habit.name,
-        category: habit.category,
-        target: habit.target,
-        archived: Boolean(habit.archived),
-        totalLogs: sortedLogs.length,
+        category: habit.category || "Wellness",
+        target: habit.target || "Daily",
+        totalLogs: logs.length,
         avgProgress: avg,
-        lastProgress: last?.progress ?? 0,
+        currentStreak: computeCurrentStreak(logs),
         lastDate: last?.date || "No logs",
       };
     });
   }, [habitDefinitions, allLogs]);
 
   const categories = useMemo(() => {
-    const set = new Set(library.map((habit) => habit.category || "Other"));
-    return ["all", ...[...set].sort()];
+    const set = new Set(library.map((habit) => habit.category || "Wellness"));
+    return ["all", ...Array.from(set).sort()];
   }, [library]);
 
   const filteredLibrary = useMemo(() => {
     let list = library;
     const q = query.trim().toLowerCase();
-    if (q) {
-      list = list.filter((habit) => habit.name.toLowerCase().includes(q));
-    }
-    if (category !== "all") {
-      list = list.filter((habit) => (habit.category || "Other") === category);
-    }
-    if (status === "logged") {
-      list = list.filter((habit) => habit.totalLogs > 0);
-    }
-    if (status === "not_logged") {
-      list = list.filter((habit) => habit.totalLogs === 0);
-    }
-    if (status === "strong") {
-      list = list.filter((habit) => habit.avgProgress >= 80);
-    }
-    if (status === "needs_attention") {
-      list = list.filter((habit) => habit.totalLogs > 0 && habit.avgProgress < 50);
-    }
-
+    if (q) list = list.filter((habit) => habit.name.toLowerCase().includes(q));
+    if (category !== "all") list = list.filter((habit) => habit.category === category);
     return [...list].sort((a, b) => {
-      if (sort === "progress") return b.avgProgress - a.avgProgress;
+      if (sort === "completion") return b.avgProgress - a.avgProgress;
+      if (sort === "streak") return b.currentStreak - a.currentStreak;
       if (sort === "recent") return String(b.lastDate).localeCompare(String(a.lastDate));
-      if (sort === "logs") return b.totalLogs - a.totalLogs;
       return a.name.localeCompare(b.name);
     });
-  }, [library, query, category, status, sort]);
+  }, [library, query, category, sort]);
 
-  const stats = useMemo(() => {
-    const total = library.length;
-    const logged = library.filter((habit) => habit.totalLogs > 0).length;
-    const avg = total
-      ? Math.round(library.reduce((sum, habit) => sum + habit.avgProgress, 0) / total)
-      : 0;
-    const strong = library.filter((habit) => habit.avgProgress >= 80).length;
-    return { total, logged, avg, strong };
-  }, [library]);
+  const quickLog = async (habit) => {
+    if (!habit.id) {
+      toast.error("Habit definition not found");
+      return;
+    }
+    setBusyId(String(habit.id));
+    try {
+      await updateProgress(habit.id, 100, todayISO());
+      await refreshData();
+      await loadLogs();
+      toast.success("Quick logged", habit.name);
+    } catch (error) {
+      toast.error("Quick log failed", error?.message || "Unknown error");
+    } finally {
+      setBusyId("");
+    }
+  };
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Habit library"
-        title="Organize every routine"
-        description="Search, filter, and compare habits using your real log history."
-        actions={
-          <Button as={Link} to="/app" variant="secondary">
-            Back to Dashboard
-          </Button>
-        }
-      />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total habits" value={stats.total} sub="Definitions" icon={FiBookOpen} />
-        <StatCard label="Logged habits" value={stats.logged} sub="With history" icon={FiCheckCircle} tone="green" />
-        <StatCard label="Average progress" value={`${stats.avg}%`} sub="Across library" icon={FiTarget} tone="slate" />
-        <StatCard label="Strong habits" value={stats.strong} sub="≥ 80% avg" icon={FiClock} tone="amber" />
+    <div>
+      <div className="mb-10">
+        <h1 className="text-5xl font-semibold tracking-[-0.02em] text-[#181c1e]">Habit Library</h1>
+        <p className="mt-3 text-xl text-[#464653]">Manage and organize your wellness routines.</p>
       </div>
 
-      <FilterBar
-        search={query}
-        onSearch={setQuery}
-        resultText={`Showing ${filteredLibrary.length} of ${library.length} habits`}
-        filters={[
-          {
-            label: "Category",
-            value: category,
-            onChange: setCategory,
-            options: categories.map((item) => ({
-              value: item,
-              label: item === "all" ? "All categories" : item,
-            })),
-          },
-          {
-            label: "Status",
-            value: status,
-            onChange: setStatus,
-            options: [
-              { value: "all", label: "All status" },
-              { value: "logged", label: "Logged" },
-              { value: "not_logged", label: "Not logged" },
-              { value: "strong", label: "Strong" },
-              { value: "needs_attention", label: "Needs attention" },
-            ],
-          },
-          {
-            label: "Sort",
-            value: sort,
-            onChange: setSort,
-            options: [
-              { value: "name", label: "Name" },
-              { value: "recent", label: "Recent" },
-              { value: "progress", label: "Progress" },
-              { value: "logs", label: "Logs" },
-            ],
-          },
-        ]}
-      />
+      <div className="mb-10 flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-[0_10px_30px_rgba(24,28,30,0.04)] md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-bold tracking-[0.14em] text-[#181c1e]">FILTERS:</span>
+          {categories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setCategory(item)}
+              className={[
+                "rounded-full px-4 py-1.5 text-sm font-semibold tracking-[0.08em]",
+                category === item ? "bg-[#4c51bf] text-white" : "bg-[#ebeef0] text-[#181c1e]",
+              ].join(" ")}
+            >
+              {item === "all" ? "All" : item}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-5">
+          <label className="flex min-w-[320px] items-center gap-3 border-b border-[#c7c5d5] px-2 py-2">
+            <FiSearch className="text-[#464653]" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="w-full bg-transparent text-lg text-[#181c1e] outline-none placeholder:text-[#767684]"
+              placeholder="Search habits..."
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm font-bold tracking-[0.14em] text-[#181c1e]">
+            SORT
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value)}
+              className="rounded-lg border border-[#c7c5d5] bg-white px-3 py-2 text-sm tracking-normal text-[#181c1e]"
+            >
+              <option value="name">Name</option>
+              <option value="completion">Completion</option>
+              <option value="streak">Streak</option>
+              <option value="recent">Recent</option>
+            </select>
+          </label>
+        </div>
+      </div>
 
       {loadingLogs ? (
         <SkeletonGrid count={6} />
       ) : library.length === 0 ? (
         <EmptyState
           title="No habits yet"
-          description="Start logging habits and they will appear here as a clean library."
+          description="Create a habit and it will appear here as a card with real progress."
           actionLabel="Go to Dashboard"
           actionTo="/app"
         />
       ) : filteredLibrary.length === 0 ? (
         <EmptyState
           title="No matching habits"
-          description="Try a broader search, category, or status filter."
+          description="Try another search or filter."
           actionLabel="Clear filters"
           onAction={() => {
             setQuery("");
             setCategory("all");
-            setStatus("all");
-            setSort("name");
           }}
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredLibrary.map((habit) => (
-            <Card
-              as={Link}
+        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+          {filteredLibrary.map((habit, index) => (
+            <article
               key={habit.id || habit.name}
-              to={`/app/habit/${encodeURIComponent(habit.name)}`}
-              className="block transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(15,23,42,0.08)]"
+              className={[
+                "overflow-hidden rounded-2xl border bg-white shadow-[0_10px_30px_rgba(24,28,30,0.05)]",
+                index % 3 === 0 ? "border-t-[#2d4e32]" : index % 3 === 1 ? "border-[#c7c5d5]" : "border-t-[#39485c]",
+              ].join(" ")}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-lg font-semibold text-slate-950">{habit.name}</div>
-                  <div className="mt-1 text-sm text-slate-500">
-                    {habit.target || "Daily"}
+              <div className="min-h-[344px] p-8">
+                <div className="mb-7 flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-5">
+                    <div className="grid h-[60px] w-[60px] place-items-center rounded-xl bg-[#ebeef0] text-xl font-bold text-[#2d4e32]">
+                      {habit.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-semibold leading-tight tracking-[-0.01em] text-[#181c1e]">{habit.name}</h2>
+                      <Badge tone={habit.category === "Productivity" ? "indigo" : habit.category === "Health" ? "green" : "slate"} className="mt-4">
+                        {habit.category}
+                      </Badge>
+                    </div>
+                  </div>
+                  <HabitActionsMenu
+                    actions={[
+                      {
+                        label: "View details",
+                        to: `/app/habit/${encodeURIComponent(habit.name)}`,
+                        LinkComponent: Link,
+                        icon: FiEye,
+                      },
+                      {
+                        label: busyId === String(habit.id) ? "Logging..." : "Quick log today",
+                        onClick: () => quickLog(habit),
+                        icon: FiCheckCircle,
+                        disabled: busyId === String(habit.id),
+                      },
+                    ]}
+                  />
+                </div>
+
+                <div className="mt-8 grid grid-cols-2 gap-8">
+                  <div>
+                    <div className="text-sm font-bold tracking-[0.14em] text-[#181c1e]">CURRENT STREAK</div>
+                    <div className="mt-3 text-3xl font-bold text-[#181c1e]">
+                      {habit.currentStreak} <span className="text-xl font-medium">Days</span>
+                    </div>
+                    <div className="mt-3 text-sm text-[#767684]">Last logged: {habit.lastDate}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold tracking-[0.14em] text-[#181c1e]">COMPLETION</div>
+                    <div className="mt-3 text-3xl font-bold text-[#181c1e]">{habit.avgProgress}%</div>
                   </div>
                 </div>
-                <Badge tone={habit.avgProgress >= 80 ? "green" : habit.totalLogs ? "amber" : "slate"}>
-                  {habit.category || "General"}
-                </Badge>
               </div>
 
-              <ProgressBar value={habit.avgProgress} label="Average progress" className="mt-5" />
-
-              <div className="mt-5 grid grid-cols-3 gap-2 text-sm text-slate-700">
-                <div>
-                  <div className="text-xs text-slate-500">Logs</div>
-                  <div className="text-lg font-semibold text-slate-950">{habit.totalLogs}</div>
-                </div>
-
-                <div>
-                  <div className="text-xs text-slate-500">Avg</div>
-                  <div className="text-lg font-semibold text-slate-950">
-                    {habit.avgProgress}%
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs text-slate-500">Last</div>
-                  <div className="text-lg font-semibold text-slate-950">
-                    {habit.lastProgress}%
-                  </div>
-                </div>
+              <div className="flex items-center justify-between border-t border-[#e0e3e5] bg-[#f7fafc] px-8 py-5">
+                <Link
+                  to={`/app/habit/${encodeURIComponent(habit.name)}`}
+                  className="text-sm font-bold tracking-[0.14em] text-[#181c1e]"
+                >
+                  View Details
+                </Link>
+                <Button
+                  variant={index % 3 === 1 ? "primary" : "secondary"}
+                  onClick={() => quickLog(habit)}
+                  disabled={busyId === String(habit.id)}
+                >
+                  <FiCheckCircle />
+                  {busyId === String(habit.id) ? "Logging" : "Quick Log"}
+                </Button>
               </div>
-
-              <div className="mt-4 text-xs text-slate-500">
-                Last logged: {habit.lastDate}
-              </div>
-            </Card>
+            </article>
           ))}
         </div>
       )}

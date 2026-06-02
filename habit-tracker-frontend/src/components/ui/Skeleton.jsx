@@ -3,7 +3,7 @@ export default function Skeleton({ className = "" }) {
     <div
       className={[
         "relative overflow-hidden rounded-xl bg-slate-100",
-        "after:absolute after:inset-0 after:animate-[shimmer_1.3s_infinite] after:bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.75),transparent)]",
+        "after:absolute after:inset-0 after:animate-[shimmer_1.3s_infinite] after:bg-[linear-gradient(110deg,transparent,rgba(224,227,229,0.55),transparent)]",
         className,
       ].join(" ")}
       aria-hidden="true"
